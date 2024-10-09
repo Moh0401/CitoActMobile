@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "293815928522",
+    "project_id": "citoact",
+    "storage_bucket": "citoact.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:293815928522:android:3992337dc413e82b599633",
+        "android_client_info": {
+          "package_name": "com.example.cito_act_mobile_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdh1Tq0LLGHLjqb2nTznLhFSqmzOPSt2w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
