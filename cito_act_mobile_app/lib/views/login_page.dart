@@ -20,12 +20,14 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white, // Fond blanc
-      body: Padding(
+      body: SingleChildScrollView( // Enveloppez le contenu dans un SingleChildScrollView
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            const SizedBox(height: 50),
+
             // Logo en haut
             Image.asset(
               "assets/images/login_logo.png",

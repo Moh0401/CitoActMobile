@@ -13,6 +13,7 @@ class ActionModel {
   String lastName;
   String profilePic;
   bool valider;
+  int likeCount; // Ajout du champ likeCount
 
   ActionModel({
     required this.actionId,
@@ -28,7 +29,8 @@ class ActionModel {
     required this.firstName,
     required this.lastName,
     required this.profilePic,
-    this.valider = false, // Initialiser à false
+    this.valider = false,
+    this.likeCount = 0, // Initialisé à 0 par défaut
   });
 
   // Méthode pour convertir en Map
@@ -47,7 +49,8 @@ class ActionModel {
       'firstName': firstName,
       'lastName': lastName,
       'profilePic': profilePic,
-      'valider': valider, // Ajout du champ valider
+      'valider': valider,
+      'likeCount': likeCount, // Ajout de likeCount
     };
   }
 
@@ -67,7 +70,8 @@ class ActionModel {
       firstName: map['firstName'],
       lastName: map['lastName'],
       profilePic: map['profilePic'],
-      valider: map['valider'] ?? false, // Par défaut false
+      valider: map['valider'] ?? false,
+      likeCount: map['likeCount'] ?? 0, // Ajout de likeCount
     );
   }
 }

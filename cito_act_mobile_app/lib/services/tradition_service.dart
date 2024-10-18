@@ -72,4 +72,12 @@ class TraditionService {
       throw Exception("Erreur lors de l'upload du fichier : $e");
     }
   }
+
+  Future<void> incrementLikes(String traditionId, int currentLikes) async {
+    // Incrémentez le nombre de likes dans Firestore
+    await _firestore.collection('traditions').doc(traditionId).update({
+      'likes': currentLikes + 1,
+    });
+  }
+
 }

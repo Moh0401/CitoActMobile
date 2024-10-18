@@ -1,8 +1,9 @@
+import 'package:cito_act_mobile_app/models/projet_model.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firebase Firestore
 import '../utils/bottom_nav_bar.dart';
 import '../utils/search_bar.dart';
 import 'projet_detail_page.dart';
-import '../models/projet.dart';
 
 class ProjetPage extends StatelessWidget {
   final int selectedIndex;
@@ -31,38 +32,34 @@ class ProjetPage extends StatelessWidget {
             const CustomSearchBar(),
             SizedBox(height: 16),
             Expanded(
-              child: ListView(
-                children: [
-                  buildCard(
-                    context,
-                    Projet(
-                      title: 'Projet 1',
-                      description: 'Description du projet 1. Ce projet vise à améliorer ...',
-                      imagePath: 'assets/images/projet1.jpg',
-                    ),
-                    groupName, // Ajoutez groupName ici
-                  ),
-                  SizedBox(height: 16),
-                  buildCard(
-                    context,
-                    Projet(
-                      title: 'Projet 2',
-                      description: 'Description du projet 2. Ce projet se concentre sur ...',
-                      imagePath: 'assets/images/projet2.jpg',
-                    ),
-                    groupName, // Ajoutez groupName ici
-                  ),
-                  SizedBox(height: 16),
-                  buildCard(
-                    context,
-                    Projet(
-                      title: 'Projet 3',
-                      description: 'Description du projet 3. Ce projet a pour but de ...',
-                      imagePath: 'assets/images/projet3.jpg',
-                    ),
-                    groupName, // Ajoutez groupName ici
-                  ),
-                ],
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('projets').snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Une erreur est survenue'));
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(child: Text('Aucun projet trouvé'));
+                  }
+
+                  // Récupérer les données des documents
+                  List<ProjetModel> projets = snapshot.data!.docs.map((doc) {
+                    var data = doc.data() as Map<String, dynamic>;
+                    return ProjetModel.fromMap(data); // Utiliser le factory pour créer ProjetModel
+                  }).toList();
+
+                  return ListView.builder(
+                    itemCount: projets.length,
+                    itemBuilder: (context, index) {
+                      return buildCard(context, projets[index], groupName);
+                    },
+                  );
+                },
               ),
             ),
           ],
@@ -75,7 +72,7 @@ class ProjetPage extends StatelessWidget {
     );
   }
 
-  Widget buildCard(BuildContext context, Projet projet, String groupName) {
+  Widget buildCard(BuildContext context, ProjetModel projet, String groupName) {
     return Card(
       color: Colors.white,
       shape: RoundedRectangleBorder(
@@ -84,8 +81,10 @@ class ProjetPage extends StatelessWidget {
       ),
       child: ListTile(
         contentPadding: EdgeInsets.all(8.0),
-        leading: Image.asset(projet.imagePath, fit: BoxFit.cover, width: 80),
-        title: Text(projet.title, style: TextStyle(fontWeight: FontWeight.bold)),
+        leading: projet.imageUrl.isNotEmpty
+            ? Image.network(projet.imageUrl, fit: BoxFit.cover, width: 80) // Utiliser imageUrl
+            : Container(width: 80, color: Colors.grey[300]), // Placeholder si pas d'image
+        title: Text(projet.titre, style: TextStyle(fontWeight: FontWeight.bold)), // Utiliser titre
         subtitle: Text(projet.description),
         trailing: TextButton(
           onPressed: () {
@@ -93,7 +92,7 @@ class ProjetPage extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (context) => ProjetDetailPage(
-                  projet: projet,
+                  projetId: projet.projetId, // Passez l'ID du projet ici
                   groupName: groupName, // Passez groupName ici
                   selectedIndex: selectedIndex,
                   onItemTapped: onItemTapped,

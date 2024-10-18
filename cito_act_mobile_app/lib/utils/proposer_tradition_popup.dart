@@ -34,7 +34,7 @@ class _ProposerTraditionPopupState extends State<ProposerTraditionPopup> {
 
   Future<void> _submitData() async {
     try {
-      final String title = _titleController.text;
+      final String titre = _titleController.text;
       final String description = _descriptionController.text;
       final String praticiens = _praticiensController.text;
       final String menaces = _menacesController.text;
@@ -53,7 +53,7 @@ class _ProposerTraditionPopupState extends State<ProposerTraditionPopup> {
       String? profilePic = userDoc.data() is Map ? (userDoc.data() as Map<String, dynamic>)['imageUrl'] : null;
 
       Map<String, dynamic> traditionData = {
-        'title': title,
+        'titre': titre,
         'description': description,
         'praticiens': praticiens,
         'menaces': menaces,
@@ -244,9 +244,11 @@ class _ProposerTraditionPopupState extends State<ProposerTraditionPopup> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _submitData,
-                  child: const Text('Soumettre'),
+                  child: const Text('Soumettre', style: TextStyle(color: Color(0xFF2F313F)),),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2F313F),
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+
+                    backgroundColor: Colors.white,
                   ),
                 ),
               ],

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firebase Firestore
 import '../utils/bottom_nav_bar.dart';
 import '../utils/search_bar.dart';
 import 'tradition_detail_page.dart';
-import '../models/tradition.dart';
+import '../models/tradition_model.dart'; // Assurez-vous d'importer le bon modèle
 
 class TraditionPage extends StatelessWidget {
   final int selectedIndex;
@@ -29,38 +30,37 @@ class TraditionPage extends StatelessWidget {
             const CustomSearchBar(),
             SizedBox(height: 16),
             Expanded(
-              child: ListView(
-                children: [
-                  buildCard(
-                    context,
-                    Tradition(
-                      title: 'Lorem Ipsum Dolor',
-                      description:
-                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et massa mi. Aliquam in hendrerit urna.',
-                      imagePath: 'assets/images/tradition1.jpg',
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  buildCard(
-                    context,
-                    Tradition(
-                      title: 'Dolor Sit Amet',
-                      description:
-                          'Pellentesque sit amet sapien fringilla, mattis ligula consectetur, ultrices mauris. Maecenas vitae mattis tellus.',
-                      imagePath: 'assets/images/tradition2.jpg',
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  buildCard(
-                    context,
-                    Tradition(
-                      title: 'Consectetur Adipiscing',
-                      description:
-                          'Aliquam in hendrerit urna. Pellentesque sit amet sapien fringilla, mattis ligula consectetur, ultrices mauris.',
-                      imagePath: 'assets/images/tradition3.jpg',
-                    ),
-                  ),
-                ],
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('traditions')
+                    .where('valider', isEqualTo: true) // Filtrer par valider = true
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Une erreur est survenue'));
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(child: Text('Aucune tradition trouvée'));
+                  }
+
+                  // Récupérer les données des documents
+                  List<TraditionModel> traditions = snapshot.data!.docs.map((doc) {
+                    var data = doc.data() as Map<String, dynamic>;
+                    return TraditionModel.fromMap(data); // Utiliser le factory pour créer TraditionModel
+                  }).toList();
+
+                  return ListView.builder(
+                    itemCount: traditions.length,
+                    itemBuilder: (context, index) {
+                      return buildCard(context, traditions[index]);
+                    },
+                  );
+                },
               ),
             ),
           ],
@@ -73,7 +73,7 @@ class TraditionPage extends StatelessWidget {
     );
   }
 
-  Widget buildCard(BuildContext context, Tradition tradition) {
+  Widget buildCard(BuildContext context, TraditionModel tradition) {
     return Card(
       color: Colors.white,
       shape: RoundedRectangleBorder(
@@ -82,9 +82,10 @@ class TraditionPage extends StatelessWidget {
       ),
       child: ListTile(
         contentPadding: EdgeInsets.all(8.0),
-        leading: Image.asset(tradition.imagePath, fit: BoxFit.cover, width: 80),
-        title: Text(tradition.title,
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        leading: tradition.imageUrl != null
+            ? Image.network(tradition.imageUrl!, fit: BoxFit.cover, width: 80) // Utiliser imageUrl
+            : Container(width: 80, color: Colors.grey[300]), // Placeholder si pas d'image
+        title: Text(tradition.titre, style: TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(tradition.description),
         trailing: TextButton(
           onPressed: () {

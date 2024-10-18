@@ -49,7 +49,7 @@ class RouteGenerator {
               case '/home':
                 return AcceuilPage(selectedIndex: 0, onItemTapped: (int index) {});
               case '/action':
-                return ActionPage(selectedIndex: 1, onItemTapped: (int index) {});
+                return ActionPage(selectedIndex: 1, onItemTapped: (int index) {}, userId: '', firstName: '', lastName: '',);
               case '/projet':
                 return ProjetPage(selectedIndex: 2, onItemTapped: (int index) {});
               case '/tradition':

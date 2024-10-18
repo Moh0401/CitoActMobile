@@ -332,7 +332,7 @@ class _ProposerProjetPopupState extends State<ProposerProjetPopup> {
     );
 
     _clearFields();
-    _showDialog('Action créée avec succès !');
+    _showDialog('Projet créée avec succès !');
     } catch (error) {
     _showDialog('Une erreur est survenue : $error', isError: true);
     }
@@ -345,7 +345,7 @@ class _ProposerProjetPopupState extends State<ProposerProjetPopup> {
         ),
       ),
       child: const Text(
-        'Proposer une action',
+        'Proposer une projet',
         style: TextStyle(color: Color(0xFF2F313F)),
       ),
     ),

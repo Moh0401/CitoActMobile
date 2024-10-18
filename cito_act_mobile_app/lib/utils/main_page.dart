@@ -23,6 +23,9 @@ class _MainPageState extends State<MainPage> {
       ActionPage(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
+        userId: '',
+        firstName: '',
+        lastName: '',
       ),
       ProjetPage(
         selectedIndex: _selectedIndex,

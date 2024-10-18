@@ -1,12 +1,14 @@
+import 'package:cito_act_mobile_app/views/action_buttons_section.dart';
+import 'package:cito_act_mobile_app/views/add_button.dart';
+import 'package:cito_act_mobile_app/views/user_info_section.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../utils/bottom_nav_bar.dart';
 import '../utils/profile_edit_popup.dart';
-import '../utils/proposer_action_popup.dart';
-import '../utils/proposer_popup.dart';
-import '../utils/proposer_projet_popup.dart';
-import '../utils/proposer_tradition_popup.dart';
+import '../models/user_model.dart'; // Importer votre modèle utilisateur
 
-class ProfilPage extends StatelessWidget {
+class ProfilPage extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
 
@@ -16,157 +18,84 @@ class ProfilPage extends StatelessWidget {
   });
 
   @override
+  _ProfilPageState createState() => _ProfilPageState();
+}
+
+class _ProfilPageState extends State<ProfilPage> {
+  UserModel? currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users') // Assurez-vous que la collection est correcte
+          .doc(user.uid)
+          .get();
+
+      if (userDoc.exists) {
+        setState(() {
+          currentUser = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profile'),
+        title: const Text('Profile'),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.edit), // L'icône dans l'AppBar
-            onPressed: () {
+            icon: const Icon(Icons.edit), // L'icône dans l'AppBar
+            onPressed: currentUser != null // Vérification avant de passer currentUser
+                ? () {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
-                  return ProfileEditPopup(); // Affiche le popup de modification
+                  return ProfileEditPopup(user: currentUser!); // Passez l'utilisateur ici
                 },
               );
-            },
+            }
+                : null, // Ne rien faire si currentUser est nul
           ),
 
-          // Ajouter l'image à droite de l'icône
+          // Ajouter l'image à droite de l'icône si elle existe
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: CircleAvatar(
-              backgroundImage: AssetImage("assets/images/profile.jpg"), // Remplacer par votre image
-              radius: 20, // Ajuster la taille du cercle
+              backgroundImage: currentUser?.imageUrl != null
+                  ? NetworkImage(currentUser!.imageUrl!) // Image de profil de l'utilisateur
+                  : const AssetImage("assets/images/profile.jpg") as ImageProvider, // Image par défaut
+              radius: 20,
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: currentUser == null
+          ? const Center(child: CircularProgressIndicator()) // Afficher un loader si les données ne sont pas encore chargées
+          : SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            UserInfoSection(),
+            UserInfoSection(user: currentUser!), // Passer les infos de l'utilisateur
             ActionButtonsSection(context),
             AddButton(),
           ],
         ),
       ),
       bottomNavigationBar: BottomNavBar(
-        selectedIndex: selectedIndex,
-        onItemTapped: onItemTapped,
+        selectedIndex: widget.selectedIndex,
+        onItemTapped: widget.onItemTapped,
       ),
     );
   }
 }
-
-class UserInfoSection extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Infos Utilisateurs',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 10),
-          _buildInfoRow('ID', '001'),
-          _buildInfoRow('Nom', 'Traoré'),
-          _buildInfoRow('Prénom', 'Mohamed'),
-          _buildInfoRow('Email', 'mohamed@gmail.com'),
-          _buildInfoRow('Tél', '+223 76435578'),
-          _buildInfoRow('Role', 'Citoyen'),
-          _buildInfoRow('Date D\'inscription', '01/01/2000'),
-          _buildInfoRow('Point De Participation', '2000'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        children: [
-          Text('$label : ', style: TextStyle(fontWeight: FontWeight.bold)),
-          Text(value),
-        ],
-      ),
-    );
-  }
-}
-
-class ActionButtonsSection extends StatelessWidget {
-  final BuildContext context;
-
-  ActionButtonsSection(this.context);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Column(
-        children: [
-          _buildButton(context, 'MES ACTIONS', () {
-            Navigator.of(context).pop(); // Ferme le pop-up
-            Navigator.pushNamed(context, '/mes-actions'); // Redirige vers la page des actions
-          }),
-          SizedBox(height: 10),
-          _buildButton(context, 'MES PROJETS', () {
-            Navigator.of(context).pop(); // Ferme le pop-up
-            Navigator.pushNamed(context, '/mes-projets'); // Redirige vers la page des projets
-          }),
-          SizedBox(height: 10),
-          _buildButton(context, 'TRADITIONS PARTAGÉS', () {
-            Navigator.of(context).pop(); // Ferme le pop-up
-            Navigator.pushNamed(context, '/traditions-partages'); // Redirige vers la page des traditions
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildButton(BuildContext context, String text, VoidCallback onPressed) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      child: Text(
-        text,
-        style: TextStyle(color: Colors.white),
-      ),
-      style: ElevatedButton.styleFrom(
-        minimumSize: Size(double.infinity, 50),
-        backgroundColor: Color(0xFF6887B0),
-      ),
-    );
-  }
-}
-
-class AddButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20.0),
-        child: FloatingActionButton(
-          onPressed: () {
-            // Affiche le popup ProposerPopup
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return ProposerPopup(); // Appel du popup pour proposer une action, un projet ou une tradition
-              },
-            );
-          },
-          child: Icon(Icons.add, color: Colors.white), // Icône en blanc
-          backgroundColor: Color(0xFF6887B0),
-        ),
-      ),
-    );
-  }
-}
-

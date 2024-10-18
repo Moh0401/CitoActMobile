@@ -62,7 +62,9 @@ class ProjetService {
   // Helper method to upload an image to Firebase Storage
   Future<String> _uploadImageToFirebase(String projetId, File imageFile) async {
     try {
-      final ref = _storage.ref().child('action_images/$projetId/${imageFile.path.split('/').last}');
+      final ref = _storage.ref().child('projet_images/$projetId/${imageFile.path
+          .split('/')
+          .last}');
       final uploadTask = await ref.putFile(imageFile);
       return await uploadTask.ref.getDownloadURL();
     } catch (e) {
@@ -71,22 +73,57 @@ class ProjetService {
   }
 
   // Method to fetch all actions
-  Future<List<ProjetModel>> fetchActions() async {
+  Future<List<ProjetModel>> fetchProjets() async {
     try {
-      final snapshot = await _firestore.collection('actions').get();
-      return snapshot.docs.map((doc) => ProjetModel.fromMap(doc.data())).toList();
+      final snapshot = await _firestore.collection('projets').get();
+      return snapshot.docs.map((doc) => ProjetModel.fromMap(doc.data()))
+          .toList();
     } catch (e) {
-      throw Exception('Failed to fetch actions: $e');
+      throw Exception('Failed to fetch projets: $e');
     }
   }
 
   // Method to delete an action
   Future<void> deleteAction(String actionId) async {
     try {
-      await _firestore.collection('actions').doc(actionId).delete();
+      await _firestore.collection('projets').doc(actionId).delete();
     } catch (e) {
-      throw Exception('Failed to delete action: $e');
+      throw Exception('Failed to delete projet: $e');
     }
   }
-}
 
+  // Method to fetch all validated projects
+  Future<List<ProjetModel>> fetchValidatedProjets() async {
+    try {
+      QuerySnapshot snapshot = await _firestore
+          .collection('projets')
+          .where('valider', isEqualTo: true)
+          .get();
+
+      return snapshot.docs.map((doc) =>
+          ProjetModel.fromMap(doc.data() as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw Exception('Erreur lors de la récupération des projets : $e');
+    }
+  }
+
+  Future<ProjetModel> fetchProjetById(String projetId) async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('projets').doc(
+          projetId).get();
+      if (doc.exists) {
+        return ProjetModel.fromMap(doc.data() as Map<String, dynamic>);
+      } else {
+        throw Exception('Projet non trouvé');
+      }
+    } catch (e) {
+      throw Exception('Erreur lors de la récupération du projet: $e');
+    }
+  }
+
+  Future<void> incrementLikes(String projetId, int currentLikes) async {
+    await _firestore.collection('projets').doc(projetId).update({
+      'likes': currentLikes + 1,
+    });
+  }
+}

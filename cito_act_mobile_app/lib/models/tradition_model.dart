@@ -17,6 +17,8 @@ class TraditionModel {
   String firstName;     // First name
   String lastName;      // Last name
   String? profilePic;   // Profile picture URL (optional)
+  int likes; // Nouveau champ
+
 
   TraditionModel({
     required this.id,
@@ -34,13 +36,14 @@ class TraditionModel {
     required this.firstName,
     required this.lastName,
     this.profilePic,
+    this.likes = 0, // Initialisation par défaut
   });
 
   // Convert TraditionModel to a map for Firestore
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'titre': titre,
+      'titre': titre, // Ici aussi, utilisez 'titre'
       'description': description,
       'praticiens': praticiens,
       'menaces': menaces,
@@ -54,7 +57,9 @@ class TraditionModel {
       'firstName': firstName,     // Added firstName
       'lastName': lastName,       // Added lastName
       'profilePic': profilePic,   // Added profilePic (optional)
+      'likes': likes,
     };
+
   }
 
   // Create a TraditionModel instance from Firestore map
@@ -75,6 +80,10 @@ class TraditionModel {
       firstName: map['firstName'] ?? '',
       lastName: map['lastName'] ?? '',
       profilePic: map['profilePic'],
+      likes: map['likes'] ?? 0, // Gestion du champ likes
+
     );
   }
+
+
 }

@@ -121,6 +121,7 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
         firstName: userData['firstName'],
         lastName: userData['lastName'],
         profilePic: userData['profilePic'],
+        parrainIds: [],
       );
 
       _showDialog('Action proposée avec succès !');
@@ -340,8 +341,16 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
                 // Submit button
                 ElevatedButton(
                   onPressed: _submitAction,
-                  child: const Text('Proposer l\'action'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                    backgroundColor: Colors.white, // Couleur de fond
+                  ),
+                  child: const Text(
+                    'Proposer l\'action',
+                    style: TextStyle(color: Color(0xFF2F313F)), // Couleur du texte
+                  ),
                 ),
+
               ],
             ),
           ),

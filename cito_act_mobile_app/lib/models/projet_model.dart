@@ -13,6 +13,7 @@ class ProjetModel {
   String lastName;
   String profilePic;
   bool valider;
+  int likes; // Nouveau champ pour les likes
 
   ProjetModel({
     required this.projetId,
@@ -28,14 +29,14 @@ class ProjetModel {
     required this.firstName,
     required this.lastName,
     required this.profilePic,
-    this.valider = false, // Initialiser à false
+    this.valider = false,
+    this.likes = 0, // Initialisation par défaut à 0 like
   });
-
 
   // Convertir ProjetModel en map pour Firestore
   Map<String, dynamic> toMap() {
     return {
-      'actionId': projetId,
+      'projetId': projetId,
       'titre': titre,
       'description': description,
       'localisation': localisation,
@@ -48,13 +49,15 @@ class ProjetModel {
       'firstName': firstName,
       'lastName': lastName,
       'profilePic': profilePic,
-      'valider': valider, // Ajout du champ valider
+      'valider': valider,
+      'likes': likes, // Ajout du champ likes
     };
   }
+
   // Créer un ProjetModel à partir d'un document Firestore
   factory ProjetModel.fromMap(Map<String, dynamic> map) {
     return ProjetModel(
-      projetId: map['projectId'],
+      projetId: map['projetId'],
       titre: map['titre'] ?? '',
       description: map['description'] ?? '',
       localisation: map['localisation'] ?? '',
@@ -67,7 +70,8 @@ class ProjetModel {
       firstName: map['firstName'] ?? '',
       lastName: map['lastName'] ?? '',
       profilePic: map['profilePic'] ?? '',
-      valider: map['valider'] ?? false, // Par défaut false
+      valider: map['valider'] ?? false,
+      likes: map['likes'] ?? 0, // Par défaut à 0 like
     );
   }
 }
