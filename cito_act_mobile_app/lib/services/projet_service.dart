@@ -54,6 +54,9 @@ class ProjetService {
 
       // Save action to Firestore
       await _firestore.collection('projets').doc(projetId).set(projet.toMap());
+
+      // Créer le groupe de chat pour ce projet
+      await createChatGroupForProjet(projetId);
     } catch (e) {
       throw Exception('Failed to create projet: $e');
     }
@@ -126,4 +129,42 @@ class ProjetService {
       'likes': currentLikes + 1,
     });
   }
+
+  Future<void> createChatGroupForProjet(String projetId) async {
+    try {
+      // Générer un ID unique pour le groupe de chat
+      String chatGroupId = const Uuid().v4();
+
+      // Mettre à jour le projet avec l'ID du groupe de chat
+      await _firestore.collection('projets').doc(projetId).update({
+        'chatGroupId': chatGroupId,
+      });
+
+      // Créer le groupe de chat dans une collection dédiée
+      await _firestore.collection('chats').doc(chatGroupId).set({
+        'projetId': projetId,
+        'createdAt': FieldValue.serverTimestamp(),
+        'messages': [], // Initialisation avec une liste de messages vide
+      });
+
+    } catch (e) {
+      throw Exception('Erreur lors de la création du groupe de chat: $e');
+    }
+  }
+
+  Future<List<ProjetModel>> getValidatedActionsByUser(String userId) async {
+    try {
+      QuerySnapshot snapshot = await _firestore
+          .collection('projets')
+          .where('valider', isEqualTo: true) // Filtrer par actions validées
+          .where('userId', isEqualTo: userId) // Filtrer par l'utilisateur
+          .get();
+
+      return snapshot.docs.map((doc) => ProjetModel.fromMap(doc.data() as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw Exception('Erreur lors de la récupération des projets validées : $e');
+    }
+  }
+
+
 }

@@ -1,50 +1,50 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cito_act_mobile_app/models/comment_action_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CommentActionService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final CollectionReference commentsRef = FirebaseFirestore.instance.collection('comments');
 
-  // Récupérer les commentaires pour une action donnée
-  Future<List<CommentActionModel>> fetchComments(String actionId) async {
+  Future<void> addComment(CommentActionModel comment, String actionId) async {
     try {
-      QuerySnapshot snapshot = await _firestore
-          .collection('comments_actions')
-          .where('actionId', isEqualTo: actionId)
-          .get();
+      comment.actionId = actionId; // Assurez-vous d'avoir l'actionId
+      DocumentReference docRef = await commentsRef.add(comment.toMap());
 
-      List<CommentActionModel> comments = [];
+      // Récupérer l'ID généré par Firestore et mettre à jour le commentaire
+      comment.id = docRef.id;
+      await docRef.update({'id': comment.id});  // Mettez à jour le commentaire avec l'ID
 
-      for (var doc in snapshot.docs) {
-        var data = doc.data() as Map<String, dynamic>;
-        String userId = data['userId']; // Récupérer l'ID de l'utilisateur
-
-        // Récupérer les informations de l'utilisateur
-        DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
-        var userData = userDoc.data() as Map<String, dynamic>;
-
-        comments.add(CommentActionModel(
-          commentId: doc.id,
-          actionId: data['actionId'],
-          userId: userId,
-          firstName: userData['firstName'], // Récupérer le prénom de l'utilisateur
-          lastName: userData['lastName'], // Récupérer le nom de l'utilisateur
-          content: data['content'],
-          timestamp: data['timestamp'],
-        ));
-      }
-
-      return comments;
+      print("Comment successfully added with ID: ${comment.id} and isReported: ${comment.isReported}");
     } catch (e) {
-      throw Exception('Échec de la récupération des commentaires: $e');
+      print("Failed to add comment: $e");
     }
   }
 
-  // Ajouter un nouveau commentaire
-  Future<void> addComment(CommentActionModel comment) async {
+
+
+  Stream<List<CommentActionModel>> getCommentsForAction(String actionId) {
+    return commentsRef
+        .where('actionId', isEqualTo: actionId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+      final data = doc.data() as Map<String, dynamic>?;
+      if (data != null) {
+        return CommentActionModel.fromMap(data, doc.id); // Passer doc.id ici
+      } else {
+        throw Exception('Comment data is null');
+      }
+    }).toList());
+  }
+
+
+
+
+  Future<void> reportComment(String commentId) async {
     try {
-      await _firestore.collection('comments_actions').add(comment.toMap());
+      // Met à jour le champ isReported du commentaire avec l'ID fourni
+      await commentsRef.doc(commentId).update({'isReported': true});
     } catch (e) {
-      throw Exception('Échec de l\'ajout du commentaire: $e');
+      print("Failed to report comment: $e");
+      throw e; // Renvoyer l'erreur pour la gérer à un niveau supérieur si nécessaire
     }
   }
 }

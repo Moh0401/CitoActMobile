@@ -84,8 +84,16 @@ class ProjetPage extends StatelessWidget {
         leading: projet.imageUrl.isNotEmpty
             ? Image.network(projet.imageUrl, fit: BoxFit.cover, width: 80) // Utiliser imageUrl
             : Container(width: 80, color: Colors.grey[300]), // Placeholder si pas d'image
-        title: Text(projet.titre, style: TextStyle(fontWeight: FontWeight.bold)), // Utiliser titre
-        subtitle: Text(projet.description),
+        title: Text(
+          projet.titre.toUpperCase(),
+          maxLines: 1, // Limite le titre à une seule ligne
+          style: TextStyle(fontWeight: FontWeight.bold), // Utiliser titre
+        ),
+        subtitle: Text(
+          projet.description,
+          maxLines: 3, // Limiter à 3 lignes
+          overflow: TextOverflow.ellipsis, // Ajouter des points de suspension si le texte dépasse
+        ),
         trailing: TextButton(
           onPressed: () {
             Navigator.push(
@@ -111,4 +119,5 @@ class ProjetPage extends StatelessWidget {
       ),
     );
   }
+
 }

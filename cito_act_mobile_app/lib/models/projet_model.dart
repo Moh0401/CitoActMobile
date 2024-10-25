@@ -14,6 +14,9 @@ class ProjetModel {
   String profilePic;
   bool valider;
   int likes; // Nouveau champ pour les likes
+  String? chatGroupId; // Nouveau champ pour le groupe de chat
+
+
 
   ProjetModel({
     required this.projetId,
@@ -31,6 +34,7 @@ class ProjetModel {
     required this.profilePic,
     this.valider = false,
     this.likes = 0, // Initialisation par défaut à 0 like
+    this.chatGroupId, // Optionnel, initialisé à null
   });
 
   // Convertir ProjetModel en map pour Firestore
@@ -51,6 +55,7 @@ class ProjetModel {
       'profilePic': profilePic,
       'valider': valider,
       'likes': likes, // Ajout du champ likes
+      'chatGroupId': chatGroupId, // Ajouter chatGroupId au map
     };
   }
 
@@ -72,6 +77,7 @@ class ProjetModel {
       profilePic: map['profilePic'] ?? '',
       valider: map['valider'] ?? false,
       likes: map['likes'] ?? 0, // Par défaut à 0 like
+      chatGroupId: map['chatGroupId'], // Récupérer chatGroupId
     );
   }
 }

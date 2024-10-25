@@ -1,3 +1,4 @@
+import 'package:cito_act_mobile_app/views/projet_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cito_act_mobile_app/services/auth_service.dart';
 import 'views/first_page.dart';
@@ -12,11 +13,14 @@ import 'views/action_page.dart';
 import 'views/projet_page.dart';
 import 'views/tradition_page.dart';
 import 'views/profile_page.dart';
+import 'views/error_page.dart'; // Ajoutez cette ligne
 
 final AuthService _authService = AuthService();
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
+    final args = settings.arguments;
+
     switch (settings.name) {
       case '/first':
         return MaterialPageRoute(builder: (_) => FirstPage());
@@ -38,28 +42,46 @@ class RouteGenerator {
       case '/profil':
         if (_authService.isAuthenticated) {
           // Redirige vers la page appropriée
-          return MaterialPageRoute(builder: (_) {
-            switch (settings.name) {
-              case '/mes-actions':
-                return MesActionPage();
-              case '/mes-projets':
-                return MesProjetsPage();
+          switch (settings.name) {
+            case '/mes-actions':
+              if (args is String) {
+                return MaterialPageRoute(builder: (_) => MesActionPage(userId: args,selectedIndex: 1, onItemTapped: (int index) {},  firstName: '', lastName: '',));
+              } else {
+                return MaterialPageRoute(builder: (_) => ErrorPage(message: "ID utilisateur manquant"));
+              }
+            case '/mes-projets':
+              if (args is String) {
+                return MaterialPageRoute(builder: (_) => ProjetDetailPage(
+          projetId: '',  // Remplir ces paramètres plus tard avec les arguments
+          groupName: '',
+          selectedIndex: 2,
+          onItemTapped: (index) {},
+          ));
+              } else {
+                return MaterialPageRoute(builder: (_) => ErrorPage(message: "ID utilisateur manquant"));
+              }
               case '/traditions-partages':
-                return MesTraditionsPage();
-              case '/home':
-                return AcceuilPage(selectedIndex: 0, onItemTapped: (int index) {});
-              case '/action':
-                return ActionPage(selectedIndex: 1, onItemTapped: (int index) {}, userId: '', firstName: '', lastName: '',);
-              case '/projet':
-                return ProjetPage(selectedIndex: 2, onItemTapped: (int index) {});
-              case '/tradition':
-                return TraditionPage(selectedIndex: 3, onItemTapped: (int index) {});
-              case '/profil':
-                return ProfilPage(selectedIndex: 4, onItemTapped: (int index) {});
-              default:
-                return FirstPage();
-            }
-          });
+            if (args is String) {
+              return MaterialPageRoute(builder: (_) => MesTraditionsPage(userId: args,
+                selectedIndex: 3, // par exemple
+                onItemTapped: (index) {
+                  // gérer les actions de la barre de navigation en bas si nécessaire
+                },));
+            } else {
+              return MaterialPageRoute(builder: (_) => ErrorPage(message: "ID utilisateur manquant"));
+            }            case '/home':
+              return MaterialPageRoute(builder: (_) => AcceuilPage(selectedIndex: 0, onItemTapped: (int index) {}));
+            case '/action':
+              return MaterialPageRoute(builder: (_) => ActionPage(selectedIndex: 1, onItemTapped: (int index) {}, userId: '', firstName: '', lastName: '',));
+            case '/projet':
+              return MaterialPageRoute(builder: (_) => ProjetPage(selectedIndex: 2, onItemTapped: (int index) {}));
+            case '/tradition':
+              return MaterialPageRoute(builder: (_) => TraditionPage(selectedIndex: 3, onItemTapped: (int index) {}));
+            case '/profil':
+              return MaterialPageRoute(builder: (_) => ProfilPage(selectedIndex: 4, onItemTapped: (int index) {}));
+            default:
+              return MaterialPageRoute(builder: (_) => FirstPage());
+          }
         } else {
           // Redirection vers la page de connexion si l'utilisateur n'est pas authentifié
           return MaterialPageRoute(builder: (_) => LoginPage());

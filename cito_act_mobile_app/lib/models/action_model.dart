@@ -14,6 +14,8 @@ class ActionModel {
   String profilePic;
   bool valider;
   int likeCount; // Ajout du champ likeCount
+  String? chatGroupId; // Nouveau champ pour le groupe de chat
+
 
   ActionModel({
     required this.actionId,
@@ -31,6 +33,8 @@ class ActionModel {
     required this.profilePic,
     this.valider = false,
     this.likeCount = 0, // Initialisé à 0 par défaut
+    this.chatGroupId, // Optionnel, initialisé à null
+
   });
 
   // Méthode pour convertir en Map
@@ -51,6 +55,8 @@ class ActionModel {
       'profilePic': profilePic,
       'valider': valider,
       'likeCount': likeCount, // Ajout de likeCount
+      'chatGroupId': chatGroupId, // Ajouter chatGroupId au map
+
     };
   }
 
@@ -72,6 +78,7 @@ class ActionModel {
       profilePic: map['profilePic'],
       valider: map['valider'] ?? false,
       likeCount: map['likeCount'] ?? 0, // Ajout de likeCount
+      chatGroupId: map['chatGroupId'], // Récupérer chatGroupId
     );
   }
 }

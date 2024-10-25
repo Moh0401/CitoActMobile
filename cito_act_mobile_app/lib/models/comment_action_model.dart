@@ -1,43 +1,52 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class CommentActionModel {
-  String commentId;
-  String actionId;
-  String userId; // Nouveau champ pour l'ID de l'utilisateur
+  String id; // Ajout du champ id
+  String userId;
+  String text;
+  DateTime timestamp;
+  String imageUrl;
   String firstName;
   String lastName;
-  String content;
-  String timestamp;
+  bool isReported;
+  String actionId;
 
   CommentActionModel({
-    required this.commentId,
-    required this.actionId,
+    required this.id, // Inclure id dans le constructeur
     required this.userId,
+    required this.text,
+    required this.timestamp,
+    required this.imageUrl,
     required this.firstName,
     required this.lastName,
-    required this.content,
-    required this.timestamp,
+    this.isReported = false,
+    required this.actionId,
   });
+
+  factory CommentActionModel.fromMap(Map<String, dynamic> map, String documentId) {
+    return CommentActionModel(
+      id: documentId, // Passer l'ID du document ici
+      userId: map['userId'] ?? '',
+      text: map['text'] ?? '',
+      timestamp: (map['timestamp'] as Timestamp).toDate(),
+      imageUrl: map['imageUrl'] ?? '',
+      firstName: map['firstName'] ?? '',
+      lastName: map['lastName'] ?? '',
+      isReported: map['isReported'] ?? false,
+      actionId: map['actionId'] ?? '',
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {
-      'commentId': commentId,
-      'actionId': actionId,
       'userId': userId,
+      'text': text,
+      'timestamp': Timestamp.fromDate(timestamp),
+      'imageUrl': imageUrl,
       'firstName': firstName,
       'lastName': lastName,
-      'content': content,
-      'timestamp': timestamp,
+      'isReported': isReported,
+      'actionId': actionId,
     };
-  }
-
-  factory CommentActionModel.fromMap(Map<String, dynamic> map) {
-    return CommentActionModel(
-      commentId: map['commentId'],
-      actionId: map['actionId'],
-      userId: map['userId'], // Assurez-vous que ce champ existe
-      firstName: map['firstName'],
-      lastName: map['lastName'],
-      content: map['content'],
-      timestamp: map['timestamp'],
-    );
   }
 }

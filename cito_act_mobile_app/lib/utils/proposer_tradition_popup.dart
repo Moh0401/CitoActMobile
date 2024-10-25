@@ -31,7 +31,6 @@ class _ProposerTraditionPopupState extends State<ProposerTraditionPopup> {
   bool _isRecording = false;
   AudioPlayer _audioPlayer = AudioPlayer();
   bool _isPlaying = false;
-
   Future<void> _submitData() async {
     try {
       final String titre = _titleController.text;
@@ -99,8 +98,11 @@ class _ProposerTraditionPopupState extends State<ProposerTraditionPopup> {
         traditionData['audioUrl'] = audioUrl;
       }
 
-      // Ajouter le document à Firestore avec les données de l'utilisateur
-      await FirebaseFirestore.instance.collection('traditions').add(traditionData);
+      // Ajouter le document sans traditionId et récupérer l'ID généré
+      DocumentReference docRef = await FirebaseFirestore.instance.collection('traditions').add(traditionData);
+
+      // Ajouter traditionId dans les données de la tradition et mettre à jour le document
+      await docRef.update({'traditionId': docRef.id});
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tradition proposée avec succès !')),
@@ -112,6 +114,7 @@ class _ProposerTraditionPopupState extends State<ProposerTraditionPopup> {
       );
     }
   }
+
 
   Future<void> _startRecording() async {
     try {
@@ -247,7 +250,6 @@ class _ProposerTraditionPopupState extends State<ProposerTraditionPopup> {
                   child: const Text('Soumettre', style: TextStyle(color: Color(0xFF2F313F)),),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-
                     backgroundColor: Colors.white,
                   ),
                 ),

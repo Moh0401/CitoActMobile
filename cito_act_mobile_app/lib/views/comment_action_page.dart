@@ -1,8 +1,9 @@
+import 'package:cito_act_mobile_app/models/comment_action_model.dart';
+import 'package:cito_act_mobile_app/services/comment_action_service.dart';
+import 'package:cito_act_mobile_app/services/user_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../models/comment_action_model.dart';
-import '../services/comment_action_service.dart';
 
 class CommentActionPage extends StatefulWidget {
   final String actionId;
@@ -14,106 +15,34 @@ class CommentActionPage extends StatefulWidget {
 }
 
 class _CommentActionPageState extends State<CommentActionPage> {
-  final List<CommentActionModel> comments = [];
-  final TextEditingController _controller = TextEditingController();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance; // Instance de Firestore
+  final CommentActionService _commentActionService = CommentActionService();
+  final UserService _userService = UserService();
+  final TextEditingController _commentController = TextEditingController();
 
-  // Remplacez par les informations de l'utilisateur actuel
-  final String currentUserFirstName = 'Prénom';
-  final String currentUserLastName = 'Nom';
-
-  final CommentActionService _commentService = CommentActionService();
+  // Variables pour stocker les informations utilisateur
+  String? _imageUrl;
+  String? _firstName;
+  String? _lastName;
 
   @override
   void initState() {
     super.initState();
-    _fetchComments(); // Appel de la méthode privée
+    _loadUserData(); // Charger les données de l'utilisateur
   }
 
-  Future<List<CommentActionModel>> _fetchComments() async { // Méthode renommée
-    try {
-      QuerySnapshot snapshot = await _firestore
-          .collection('comments_actions')
-          .where('actionId', isEqualTo: widget.actionId)
-          .get();
+  void _loadUserData() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
 
-      List<CommentActionModel> comments = [];
-
-      for (var doc in snapshot.docs) {
-        var data = doc.data() as Map<String, dynamic>;
-        String userId = data['userId']; // Récupérer l'ID de l'utilisateur
-
-        // Récupérer les informations de l'utilisateur
-        DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
-        if (userDoc.exists) {
-          var userData = userDoc.data() as Map<String, dynamic>;
-          print('User Data: $userData'); // Imprimez les données de l'utilisateur
-
-          comments.add(CommentActionModel(
-            commentId: doc.id,
-            actionId: data['actionId'],
-            userId: userId,
-            firstName: userData['firstName'] ?? 'Inconnu', // Défaut si non trouvé
-            lastName: userData['lastName'] ?? 'Inconnu',
-            content: data['content'],
-            timestamp: data['timestamp'],
-          ));
-        } else {
-          print('User document does not exist for userId: $userId');
-        }
-      }
-
-      return comments;
-    } catch (e) {
-      throw Exception('Échec de la récupération des commentaires: $e');
-    }
-  }
-
-  Future<void> _addComment() async {
-    if (_controller.text.isNotEmpty) {
-      // Récupérer l'utilisateur connecté via Firebase Auth
-      final currentUser = FirebaseAuth.instance.currentUser;
-      final userId = currentUser?.uid; // Récupérer l'ID de l'utilisateur connecté
-
-      if (userId != null) {
-        // Récupérer les informations de l'utilisateur depuis Firestore
-        DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
-
-        if (userDoc.exists) {
-          var userData = userDoc.data() as Map<String, dynamic>;
-
-          // Récupérer le prénom et le nom de l'utilisateur
-          String firstName = userData['firstName'] ?? 'Inconnu';
-          String lastName = userData['lastName'] ?? 'Inconnu';
-
-          // Créer le commentaire avec les bonnes informations
-          final newComment = CommentActionModel(
-            commentId: '', // Firestore générera un ID
-            actionId: widget.actionId,
-            userId: userId, // Utiliser l'ID de l'utilisateur connecté
-            firstName: firstName,
-            lastName: lastName,
-            content: _controller.text,
-            timestamp: DateTime.now().toString(),
-          );
-
-          try {
-            // Ajouter le commentaire dans Firestore
-            await _commentService.addComment(newComment);
-
-            // Mettre à jour la liste des commentaires dans l'interface utilisateur
-            setState(() {
-              comments.add(newComment);
-              _controller.clear();
-            });
-          } catch (e) {
-            print("Erreur lors de l'ajout du commentaire: $e");
-          }
-        } else {
-          print("Le document utilisateur n'existe pas pour l'ID: $userId");
-        }
-      } else {
-        print("Utilisateur non connecté.");
+    if (userId != null) {
+      try {
+        final userData = await _userService.getCurrentUserData(userId);
+        setState(() {
+          _imageUrl = userData['imageUrl'];
+          _firstName = userData['firstName'];
+          _lastName = userData['lastName'];
+        });
+      } catch (e) {
+        print('Erreur de récupération des données utilisateur: $e');
       }
     }
   }
@@ -121,47 +50,160 @@ class _CommentActionPageState extends State<CommentActionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Commentaires')),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: comments.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text('${comments[index].firstName} ${comments[index].lastName}'),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(comments[index].content),
-                      Text(comments[index].timestamp, style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                );
-              },
+      appBar: AppBar(
+        title: Text('Commentaires', style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+        backgroundColor: Color(0xFF6887B0),
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: Container(
+        color: Colors.white,
+        child: Column(
+          children: [
+            Expanded(
+              child: StreamBuilder<List<CommentActionModel>>(
+                stream: _commentActionService.getCommentsForAction(widget.actionId),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    print('Erreur: ${snapshot.error}');
+                    return Center(child: Text('Erreur lors du chargement des commentaires'));
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(child: Text('Aucun commentaire pour le moment'));
+                  }
+
+                  final comments = snapshot.data!;
+
+                  return ListView.builder(
+                    itemCount: comments.length,
+                    itemBuilder: (context, index) {
+                      final comment = comments[index];
+
+                      return Container(
+                        margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Color(0xFF6887B0), width: 2),
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            radius: 20.0,
+                            backgroundImage: comment.imageUrl.isNotEmpty
+                                ? NetworkImage(comment.imageUrl)
+                                : AssetImage('assets/default_avatar.png') as ImageProvider,
+                            backgroundColor: Colors.grey,
+                          ),
+                          title: Text(comment.text),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Posté par: ${comment.firstName} ${comment.lastName}'),
+                              if (comment.isReported)
+                                Text('Signalé', style: TextStyle(color: Color(0xFF6887B0))),
+                            ],
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  comment.isReported ? Icons.flag_outlined : Icons.flag,
+                                  color: comment.isReported ? Color(0xFF6887B0) : Colors.grey,
+                                ),
+                                onPressed: comment.isReported ? null : () async {
+                                  bool? confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Text('Confirmer le signalement'),
+                                        content: Text('Voulez-vous vraiment signaler ce commentaire ?'),
+                                        actions: <Widget>[
+                                          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text('Annuler')),
+                                          TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text('Confirmer')),
+                                        ],
+                                      );
+                                    },
+                                  );
+
+                                  if (confirm == true) {
+                                    try {
+                                      // Appel à reportComment avec l'ID du commentaire
+                                      await _commentActionService.reportComment(comment.id);
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Commentaire signalé')));
+                                      setState(() {
+                                        comment.isReported = true; // Met à jour l'état localement
+                                      });
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur lors du signalement'), backgroundColor: Color(0xFF6887B0)));
+                                    }
+                                  }
+                                },
+                              ),
+
+                            ],
+                          ),
+
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: 'Ajouter un commentaire...',
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _commentController,
+                      decoration: InputDecoration(
+                        hintText: 'Ajouter un commentaire...',
+                        border: OutlineInputBorder(),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF6887B0), width: 2.0),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.send),
-                  onPressed: _addComment,
-                ),
-              ],
+                  IconButton(
+                    icon: Icon(Icons.send),
+                    onPressed: () async {
+                      if (_commentController.text.isNotEmpty) {
+                        final userId = FirebaseAuth.instance.currentUser?.uid;
+                        if (userId != null) {
+                          // Créez le modèle de commentaire avec un ID temporaire (vide)
+                          final comment = CommentActionModel(
+                            id: '', // L'ID sera généré automatiquement
+                            text: _commentController.text,
+                            userId: userId,
+                            firstName: _firstName ?? '',
+                            lastName: _lastName ?? '',
+                            imageUrl: _imageUrl ?? '',
+                            isReported: false,
+                            timestamp: DateTime.now(),
+                            actionId: widget.actionId,
+                          );
+
+                          // Ajoutez le commentaire et récupérez l'ID généré par Firestore
+                          await _commentActionService.addComment(comment, widget.actionId);
+                          _commentController.clear();
+                        }
+                      }
+                    },
+                  ),
+
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
 }

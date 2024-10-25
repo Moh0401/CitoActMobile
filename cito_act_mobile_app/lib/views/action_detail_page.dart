@@ -1,13 +1,13 @@
 import 'package:cito_act_mobile_app/services/action_service.dart';
-import 'package:cito_act_mobile_app/services/chat_service.dart';
+import 'package:cito_act_mobile_app/views/chat_screen_action.dart';
 import 'package:cito_act_mobile_app/views/comment_action_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart'; // Assurez-vous d'importer latlong2
 import '../models/action_model.dart'; // Assurez-vous d'importer votre ActionModel ici
 import '../utils/bottom_nav_bar.dart';
-import 'chat_screen.dart'; // Importer la nouvelle page
 
 class ActionDetailPage extends StatefulWidget {
   final ActionModel action; // Changer ActionItem en ActionModel
@@ -33,8 +33,66 @@ class ActionDetailPage extends StatefulWidget {
 class _ActionDetailPageState extends State<ActionDetailPage> {
   int likeCount = 0;
   bool isLiked = false;
+  bool _isParrain = false; // État pour gérer si l'utilisateur est parrain
   final ActionService _actionService = ActionService();
-  final ChatService _chatService = ChatService();
+
+
+
+  // Fonction pour gérer le parrainage
+  Future<void> parrainAction() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Vous devez être connecté pour parrainer une Action.")),
+      );
+      return;
+    }
+
+    try {
+      // Vérifier si l'utilisateur est déjà parrain
+      final parrainageDoc = await FirebaseFirestore.instance
+          .collection('parrainages')
+          .doc(widget.action.actionId)
+          .collection('parrains')
+          .doc(user.uid)
+          .get();
+
+      if (parrainageDoc.exists) {
+        setState(() {
+          _isParrain = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Vous êtes déjà le parrain de cette action.")),
+        );
+      } else {
+        // Enregistrer le parrainage dans Firestore
+        await FirebaseFirestore.instance
+            .collection('parrainages')
+            .doc(widget.action.actionId)
+            .collection('parrains')
+            .doc(user.uid)
+            .set({
+          'userId': user.uid,
+          'actionId': widget.action.actionId,
+          'parrainéLe': Timestamp.now(),
+        });
+
+        setState(() {
+          _isParrain = true;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Vous êtes maintenant parrain de cette action.")),
+        );
+      }
+    } catch (e) {
+      print("Erreur lors du parrainage : $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur lors du parrainage.")),
+      );
+    }
+  }
 
 
   // Méthode pour ajouter l'utilisateur au groupe
@@ -72,6 +130,64 @@ class _ActionDetailPageState extends State<ActionDetailPage> {
       }
     });
   }
+
+  // Fonction pour adhérer au groupe de chat
+  Future<void> adhereAuGroupe() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Vous devez être connecté pour adhérer au groupe.")),
+      );
+      return;
+    }
+
+    try {
+      // Récupérer les données de l'utilisateur depuis Firestore
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users') // Assurez-vous que ce nom de collection est correct
+          .doc(user.uid)
+          .get();
+
+      if (userDoc.exists) {
+        var userData = userDoc.data() as Map<String, dynamic>;
+        String firstName = userData['firstName'] ?? 'Inconnu';
+        String lastName = userData['lastName'] ?? 'Inconnu';
+
+        // Ajouter l'utilisateur au groupe de chat
+        await FirebaseFirestore.instance
+            .collection('chats')
+            .doc(widget.action.actionId) // Utiliser l'ID du groupe de chat approprié
+            .collection('users')
+            .doc(user.uid)
+            .set({
+          'firstName': firstName,
+          'lastName': lastName,
+          'joinedAt': Timestamp.now(),
+        });
+
+        // Rediriger l'utilisateur vers la page de chat
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatScreenAction(
+              chatGroupId: widget.action.actionId, // Passer l'ID du groupe de chat ici
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Données de l'utilisateur introuvables.")),
+        );
+      }
+    } catch (e) {
+      print("Erreur lors de l'adhésion au groupe : $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur lors de l'adhésion au groupe.")),
+      );
+    }
+  }
+
 
 
   @override
@@ -272,107 +388,23 @@ class _ActionDetailPageState extends State<ActionDetailPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () async {
-                    // Récupérer l'utilisateur connecté
-                    User? user = FirebaseAuth.instance.currentUser;
-                    if (user != null) {
-                      String userId = user.uid; // ID de l'utilisateur actuel
-                      String actionId = widget.action.actionId; // ID de l'action liée au groupe de chat
-
-                      // Vérifiez si le groupe existe déjà
-                      bool groupExists = false;
-                      try {
-                        await _chatService.getChatGroup(actionId);
-                        groupExists = true;
-                      } catch (e) {
-                        // Le groupe n'existe pas encore
-                        groupExists = false;
-                      }
-
-                      if (!groupExists) {
-                        // Si le groupe n'existe pas, créez-le
-                        List<String> userIds = [userId]; // Les participants initiaux (l'utilisateur actuel)
-                        List<String> parrainIds = []; // Ajoutez ici les ID de parrain si nécessaire
-                        await _chatService.createChatGroup(actionId, userIds, parrainIds);
-                      }
-
-                      // Ajouter l'utilisateur au groupe (s'il n'est pas déjà dans le groupe)
-                      await _actionService.joinGroup(widget.action.actionId, userId);
-
-                      // Rediriger vers la page de chat du groupe
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChatScreen(
-                            groupId: widget.action.actionId, // Utilisation de widget.action
-                            userId: userId, // ID de l'utilisateur
-                            firstName: widget.firstName, // Utilisation de widget.firstName
-                            lastName: widget.lastName, // Utilisation de widget.lastName
-                          ),
-                        ),
-                      );
-                    } else {
-                      // Gérer le cas où l'utilisateur n'est pas connecté (afficher un message d'erreur ou rediriger)
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Veuillez vous connecter pour adhérer à cette action.')),
-                      );
-                    }
-                  },
+                  onPressed: adhereAuGroupe, // Appel de la méthode pour adhérer
                   child: Text('ADHERER'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF6887B0),
                     foregroundColor: Colors.white,
                   ),
                 ),
-
                 ElevatedButton(
-                  onPressed: () async {
-                    // Récupérer l'utilisateur connecté
-                    User? user = FirebaseAuth.instance.currentUser;
-                    if (user != null) {
-                      String userId = user.uid; // ID de l'utilisateur actuel
-                      String actionId = widget.action.actionId; // ID de l'action liée au groupe de chat
-
-                      // Vérifiez si le groupe existe déjà
-                      bool groupExists = false;
-                      try {
-                        await _chatService.getChatGroup(actionId);
-                        groupExists = true;
-                      } catch (e) {
-                        groupExists = false; // Le groupe n'existe pas
-                      }
-
-                      if (groupExists) {
-                        // Si le groupe existe déjà, définir l'utilisateur comme parrain
-                        await _actionService.becomeParrain(actionId, userId);
-
-                        // Afficher un message de succès
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Vous êtes maintenant un parrain pour ce groupe.')),
-                        );
-                      } else {
-                        // Si le groupe n'existe pas encore, afficher un message d'erreur ou en créer un (selon le besoin)
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Le groupe de discussion n\'existe pas encore.')),
-                        );
-                      }
-                    } else {
-                      // Gérer le cas où l'utilisateur n'est pas connecté (afficher un message d'erreur)
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Veuillez vous connecter pour parrainer cette action.')),
-                      );
-                    }
-                  },
-                  child: Text('PARRAINER'),
+                  onPressed: parrainAction, // Appel de la méthode pour parrainer
+                  child: Text(_isParrain ? 'Déjà Parrainé' : 'PARRAINER'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF6887B0),
-                    foregroundColor: Colors.white,
-                  ),
+                    foregroundColor: Colors.white,                            ),
                 ),
-
-
               ],
             ),
+
             SizedBox(height: 16),
 
             // Boutons "LIKE" et "COMMENTAIRE"
@@ -394,7 +426,7 @@ class _ActionDetailPageState extends State<ActionDetailPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => CommentActionPage(actionId: widget.action.actionId), // Ajoutez la parenthèse fermante ici
+                        builder: (context) => CommentActionPage(actionId: widget.action.actionId), // Passer l'ID du projet ici
                       ),
                     );
                   },

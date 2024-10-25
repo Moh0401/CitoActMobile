@@ -28,8 +28,9 @@ class _SignUpPageState extends State<SignUpPage> {
 
   File? _selectedImage;
   String? _webImageUrl;
-
   bool _isLoading = false;
+
+  String _selectedRole = 'citoyen'; // Valeur par défaut du rôle
 
   Future<void> _pickImage() async {
     if (kIsWeb) {
@@ -47,7 +48,7 @@ class _SignUpPageState extends State<SignUpPage> {
       });
     } else {
       final pickedFile =
-          await ImagePicker().pickImage(source: ImageSource.gallery);
+      await ImagePicker().pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
         setState(() {
           _selectedImage = File(pickedFile.path);
@@ -72,12 +73,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
         if (_selectedImage != null) {
           imageUrl =
-              await _storageService.uploadImage(_selectedImage!, userModel.uid);
-        }
-
-        if (imageUrl.isEmpty) {
-          print("Erreur lors du téléchargement de l'image.");
-          return;
+          await _storageService.uploadImage(_selectedImage!, userModel.uid);
         }
 
         UserModel newUser = UserModel(
@@ -86,13 +82,18 @@ class _SignUpPageState extends State<SignUpPage> {
           lastName: lastNameController.text,
           email: emailController.text,
           phone: phoneController.text,
-          role: 'citoyen',
+          role: _selectedRole,
           imageUrl: imageUrl,
         );
 
-        await _firestoreService.createUser(newUser);
-        print("Utilisateur créé dans Firestore avec succès !");
+// Ajoutez cette ligne pour vérifier l'UID
+        print("UID de l'utilisateur créé : ${newUser.uid}");
 
+// Appel au service Firestore pour enregistrer l'utilisateur
+        await _firestoreService.createUser(newUser);
+
+
+        await _firestoreService.createUser(newUser);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Votre compte a été créé avec succès !'),
@@ -150,6 +151,36 @@ class _SignUpPageState extends State<SignUpPage> {
                 buildTextField(passwordController, 'Mot de passe',
                     isPassword: true),
                 const SizedBox(height: 20),
+
+                // Dropdown pour le rôle
+                DropdownButtonFormField<String>(
+                  value: _selectedRole,
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedRole = newValue!;
+                    });
+                  },
+                  items: <String>['citoyen', 'ong']
+                      .map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  decoration: InputDecoration(
+                    labelText: 'Sélectionnez un rôle',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                      borderSide: BorderSide(color: Color(0xFF6887B0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                      borderSide: BorderSide(color: Color(0xFF6887B0)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
                 if (_isLoading)
                   CircularProgressIndicator()
                 else
@@ -171,7 +202,6 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 const SizedBox(height: 20),
 
-                // Lien pour l'inscription
                 TextButton(
                   onPressed: () {
                     Navigator.pushNamed(context, '/login');
@@ -179,7 +209,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   child: Text(
                     'Connectez-vous',
                     style: TextStyle(
-                      color: Color(0xFF6887B0), // Texte bleu
+                      color: Color(0xFF6887B0),
                     ),
                   ),
                 ),

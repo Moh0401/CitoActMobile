@@ -29,33 +29,35 @@ class TraditionService {
         'userId': tradition.userId,
         'firstName': tradition.firstName,
         'lastName': tradition.lastName,
-        'profilePic': profilePic, // Ajouter l'image de profil de l'utilisateur
-        // Ajoutez d'autres champs si nécessaire
+        'profilePic': profilePic,
       });
 
       // Uploader l'image si elle existe
       if (imageFile != null) {
         String imageUrl = await _uploadFile('tradition_images/${traditionRef.id}', imageFile);
-        traditionRef.update({'imageUrl': imageUrl});
+        await traditionRef.update({'imageUrl': imageUrl});
       }
 
       // Uploader la vidéo si elle existe
       if (videoFile != null) {
         String videoUrl = await _uploadFile('tradition_videos/${traditionRef.id}', videoFile);
-        traditionRef.update({'videoUrl': videoUrl});
+        await traditionRef.update({'videoUrl': videoUrl});
       }
 
       // Uploader le document si il existe
       if (documentFile != null) {
         String documentUrl = await _uploadFile('tradition_documents/${traditionRef.id}', documentFile);
-        traditionRef.update({'documentUrl': documentUrl});
+        await traditionRef.update({'documentUrl': documentUrl});
       }
 
       // Uploader l'audio si il existe
       if (audioPath != null) {
         String audioUrl = await _uploadFile('tradition_audios/${traditionRef.id}', File(audioPath));
-        traditionRef.update({'audioUrl': audioUrl});
+        await traditionRef.update({'audioUrl': audioUrl});
       }
+
+      // Mettez à jour le document avec traditionId
+      await traditionRef.update({'traditionId': traditionRef.id});
     } catch (e) {
       throw Exception("Erreur lors de la création de la tradition : $e");
     }
@@ -64,7 +66,6 @@ class TraditionService {
   // Méthode pour uploader un fichier sur Firebase Storage
   Future<String> _uploadFile(String path, File file) async {
     try {
-      // Uploader le fichier et obtenir un lien de téléchargement
       TaskSnapshot snapshot = await _storage.ref(path).putFile(file);
       String downloadUrl = await snapshot.ref.getDownloadURL();
       return downloadUrl;
@@ -80,4 +81,17 @@ class TraditionService {
     });
   }
 
+  Future<List<TraditionModel>> getValidatedTraditionsByUser(String userId) async {
+    try {
+      QuerySnapshot snapshot = await _firestore
+          .collection('traditions')
+          .where('valider', isEqualTo: true)
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      return snapshot.docs.map((doc) => TraditionModel.fromMap(doc.data() as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw Exception('Erreur lors de la récupération des traditions validées : $e');
+    }
+  }
 }

@@ -16,12 +16,15 @@ class AuthService {
         email: email,
         password: password,
       );
-      return _userFromFirebaseUser(userCredential.user);
+      User? user = userCredential.user;
+      print("Utilisateur Firebase créé avec UID : ${user?.uid}");
+      return _userFromFirebaseUser(user);
     } catch (e) {
-      print("Error during sign-up: $e");
+      print("Erreur lors de l'inscription : $e");
       return null;
     }
   }
+
 
   // Connexion avec email et mot de passe
   Future<UserModel?> signInWithEmailAndPassword(String email, String password) async {

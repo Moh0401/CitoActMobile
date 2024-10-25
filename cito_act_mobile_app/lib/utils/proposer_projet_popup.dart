@@ -37,30 +37,40 @@ class _ProposerProjetPopupState extends State<ProposerProjetPopup> {
 
   // Method to show DatePicker and set the selected date
   Future<void> _selectDate(TextEditingController controller) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            primaryColor: const Color(0xFF6A96CE),
-            hintColor: const Color(0xFF6A96CE),
-            colorScheme: ColorScheme.light(primary: const Color(0xFF6A96CE)),
-            buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
-            dialogBackgroundColor: Colors.white,
-          ),
-          child: child ?? const SizedBox.shrink(),
-        );
-      },
-    );
+    // Si c'est la date de début
+    if (controller == _debutController) {
+      final DateTime? pickedDate = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime.now(),
+        lastDate: DateTime(2101),
+        builder: (BuildContext context, Widget? child) {
+          return Theme(
+            data: ThemeData.light().copyWith(
+              primaryColor: const Color(0xFF6A96CE),
+              hintColor: const Color(0xFF6A96CE),
+              colorScheme: ColorScheme.light(primary: const Color(0xFF6A96CE)),
+              buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
+              dialogBackgroundColor: Colors.white,
+            ),
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
+      );
 
-    if (pickedDate != null) {
-      controller.text = "${pickedDate.toLocal()}".split(' ')[0]; // Format YYYY-MM-DD
+      if (pickedDate != null) {
+        controller.text = "${pickedDate.toLocal()}".split(' ')[0];
+        // Définir automatiquement la date de fin à une semaine après la date de début
+        DateTime dateFin = pickedDate.add(const Duration(days: 7));
+        _finController.text = "${dateFin.toLocal()}".split(' ')[0];
+      }
+    }
+    // Si c'est la date de fin (désactivé car la date de fin est automatiquement fixée)
+    else if (controller == _finController) {
+      _showDialog('La date de fin est automatiquement fixée à une semaine après la date de début', isError: true);
+      return;
     }
   }
-
   // Hide the keyboard when tapping outside of text fields
   void _hideKeyboard() {
     FocusScope.of(context).unfocus();
@@ -195,7 +205,7 @@ class _ProposerProjetPopupState extends State<ProposerProjetPopup> {
     decoration: InputDecoration(
     labelText: 'Besoin',
     labelStyle: const TextStyle(color: Color(0xFF2F313F)),
-    hintText: 'Quel est le besoin de cette action?',
+    hintText: 'Quel est le besoin de ce projet?',
     hintStyle: const TextStyle(color: Color(0xFF2F313F)),
     filled: true,
     fillColor: Colors.white,
@@ -253,7 +263,7 @@ class _ProposerProjetPopupState extends State<ProposerProjetPopup> {
     decoration: InputDecoration(
     labelText: 'Localisation',
     labelStyle: const TextStyle(color: Color(0xFF2F313F)),
-    hintText: 'Où aura lieu l\'action?',
+    hintText: 'Où aura lieu le projet?',
     hintStyle: const TextStyle(color: Color(0xFF2F313F)),
     filled: true,
     fillColor: Colors.white,
@@ -345,7 +355,7 @@ class _ProposerProjetPopupState extends State<ProposerProjetPopup> {
         ),
       ),
       child: const Text(
-        'Proposer une projet',
+        'Proposer un projet',
         style: TextStyle(color: Color(0xFF2F313F)),
       ),
     ),

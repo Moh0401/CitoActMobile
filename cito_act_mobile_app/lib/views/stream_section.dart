@@ -136,7 +136,7 @@ class StreamSection extends StatelessWidget {
                           );
                         } else if (collection == 'traditions') {
                           TraditionModel tradition = TraditionModel(
-                            id: doc.id,
+                            traditionId: doc.id,
                             titre: data['titre'],
                             description: data['description'],
                             imageUrl: data['imageUrl'],

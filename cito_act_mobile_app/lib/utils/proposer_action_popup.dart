@@ -1,11 +1,11 @@
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cito_act_mobile_app/services/action_service.dart';
+import 'package:cito_act_mobile_app/services/projet_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:uuid/uuid.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-import '../services/action_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 
 class ProposerActionPopup extends StatefulWidget {
   const ProposerActionPopup({super.key});
@@ -16,7 +16,6 @@ class ProposerActionPopup extends StatefulWidget {
 
 class _ProposerActionPopupState extends State<ProposerActionPopup> {
   XFile? _selectedImage;
-  final ActionService _actionService = ActionService();
 
   // Controllers for the TextFields
   final TextEditingController _titreController = TextEditingController();
@@ -39,34 +38,74 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
 
   // Method to show DatePicker and set the selected date
   Future<void> _selectDate(TextEditingController controller) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            primaryColor: const Color(0xFF6A96CE),
-            hintColor: const Color(0xFF6A96CE),
-            colorScheme: ColorScheme.light(primary: const Color(0xFF6A96CE)),
-            buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
-            dialogBackgroundColor: Colors.white,
-          ),
-          child: child ?? const SizedBox.shrink(),
-        );
-      },
-    );
+    // Si c'est la date de début
+    if (controller == _debutController) {
+      final DateTime? pickedDate = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime.now(),
+        lastDate: DateTime(2101),
+        builder: (BuildContext context, Widget? child) {
+          return Theme(
+            data: ThemeData.light().copyWith(
+              primaryColor: const Color(0xFF6A96CE),
+              hintColor: const Color(0xFF6A96CE),
+              colorScheme: ColorScheme.light(primary: const Color(0xFF6A96CE)),
+              buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
+              dialogBackgroundColor: Colors.white,
+            ),
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
+      );
 
-    if (pickedDate != null) {
-      controller.text = "${pickedDate.toLocal()}".split(' ')[0]; // Format YYYY-MM-DD
+      if (pickedDate != null) {
+        controller.text = "${pickedDate.toLocal()}".split(' ')[0];
+        // Réinitialiser la date de fin si elle existe déjà
+        _finController.clear();
+      }
+    }
+    // Si c'est la date de fin
+    else if (controller == _finController) {
+      // Vérifier si une date de début a été sélectionnée
+      if (_debutController.text.isEmpty) {
+        _showDialog('Veuillez d\'abord sélectionner une date de début', isError: true);
+        return;
+      }
+
+      DateTime dateDebut = DateTime.parse(_debutController.text);
+      DateTime maxDate = dateDebut.add(const Duration(days: 7)); // Maximum 7 jours après la date de début
+
+      final DateTime? pickedDate = await showDatePicker(
+        context: context,
+        initialDate: dateDebut,
+        firstDate: dateDebut,
+        lastDate: maxDate,
+        builder: (BuildContext context, Widget? child) {
+          return Theme(
+            data: ThemeData.light().copyWith(
+              primaryColor: const Color(0xFF6A96CE),
+              hintColor: const Color(0xFF6A96CE),
+              colorScheme: ColorScheme.light(primary: const Color(0xFF6A96CE)),
+              buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
+              dialogBackgroundColor: Colors.white,
+            ),
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
+      );
+
+      if (pickedDate != null) {
+        controller.text = "${pickedDate.toLocal()}".split(' ')[0];
+      }
     }
   }
-
+  // Hide the keyboard when tapping outside of text fields
   void _hideKeyboard() {
     FocusScope.of(context).unfocus();
   }
 
+  // Method to show dialog messages
   void _showDialog(String message, {bool isError = false}) {
     showDialog(
       context: context,
@@ -87,50 +126,6 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
     );
   }
 
-  Future<Map<String, dynamic>> _getCurrentUserData() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      return {
-        'firstName': userDoc['firstName'],
-        'lastName': userDoc['lastName'],
-        'profilePic': userDoc['imageUrl'],
-        'userId': user.uid
-      };
-    }
-    throw Exception('Utilisateur non connecté');
-  }
-
-  Future<void> _submitAction() async {
-    try {
-      // Get user data
-      final userData = await _getCurrentUserData();
-      String actionId = uuid.v4(); // Generate a unique action ID
-
-      await _actionService.createAction(
-        actionId: actionId,
-        titre: _titreController.text,
-        description: _descriptionController.text,
-        localisation: _localisationController.text,
-        debut: _debutController.text,
-        fin: _finController.text,
-        besoin: _besoinController.text,
-        telephone: _telephoneController.text,
-        imageFile: _selectedImage,
-        userId: userData['userId'],
-        firstName: userData['firstName'],
-        lastName: userData['lastName'],
-        profilePic: userData['profilePic'],
-        parrainIds: [],
-      );
-
-      _showDialog('Action proposée avec succès !');
-      _clearFields(); // Clear fields after successful submission
-    } catch (e) {
-      _showDialog('Échec de la proposition de l\'action : $e', isError: true);
-    }
-  }
-
   // Method to clear input fields
   void _clearFields() {
     _titreController.clear();
@@ -143,6 +138,20 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
     setState(() {
       _selectedImage = null; // Reset selected image
     });
+  }
+
+  Future<Map<String, dynamic>> _getCurrentUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      return {
+        'firstName': userDoc['firstName'],
+        'lastName': userDoc['lastName'],
+        'profilePic': userDoc['imageUrl'],
+        'userId': user.uid
+      };
+    }
+    throw Exception('Utilisateur non connecté');
   }
 
   @override
@@ -185,10 +194,11 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
                 TextField(
                   controller: _titreController,
                   textInputAction: TextInputAction.next,
+                  maxLines: 1, // Limite le titre à une seule ligne
                   decoration: InputDecoration(
                     labelText: 'Titre',
                     labelStyle: const TextStyle(color: Color(0xFF2F313F)),
-                    hintText: 'Donnez un titre à votre projet',
+                    hintText: 'Donnez un titre à votre action',
                     hintStyle: const TextStyle(color: Color(0xFF2F313F)),
                     filled: true,
                     fillColor: Colors.white,
@@ -197,17 +207,21 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
                       borderSide: BorderSide.none,
                     ),
                   ),
+                  style: const TextStyle(
+                    overflow: TextOverflow.ellipsis, // Ajoute "..." en cas de dépassement
+                  ),
                 ),
+
                 const SizedBox(height: 20),
                 // Description input field as a multi-line textarea
                 TextField(
                   controller: _descriptionController,
                   textInputAction: TextInputAction.newline,
-                  maxLines: 5,
+                  maxLines: 5, // Allows the textarea to expand up to 5 lines
                   decoration: InputDecoration(
                     labelText: 'Description',
                     labelStyle: const TextStyle(color: Color(0xFF2F313F)),
-                    hintText: 'Donnez une description à votre projet',
+                    hintText: 'Donnez une description à votre action',
                     hintStyle: const TextStyle(color: Color(0xFF2F313F)),
                     filled: true,
                     fillColor: Colors.white,
@@ -275,7 +289,7 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 // Localisation input field
                 TextField(
                   controller: _localisationController,
@@ -283,7 +297,7 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
                   decoration: InputDecoration(
                     labelText: 'Localisation',
                     labelStyle: const TextStyle(color: Color(0xFF2F313F)),
-                    hintText: 'Localisation de l\'action',
+                    hintText: 'Où aura lieu l\'action?',
                     hintStyle: const TextStyle(color: Color(0xFF2F313F)),
                     filled: true,
                     fillColor: Colors.white,
@@ -293,8 +307,8 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                // Date de début input field
+                const SizedBox(height: 10),
+                // Date de début
                 GestureDetector(
                   onTap: () => _selectDate(_debutController),
                   child: AbsorbPointer(
@@ -315,8 +329,8 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                // Date de fin input field
+                const SizedBox(height: 10),
+                // Date de fin
                 GestureDetector(
                   onTap: () => _selectDate(_finController),
                   child: AbsorbPointer(
@@ -340,17 +354,45 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
                 const SizedBox(height: 20),
                 // Submit button
                 ElevatedButton(
-                  onPressed: _submitAction,
+                  onPressed: () async {
+                    try {
+                      final currentUser = await _getCurrentUserData();
+                      final actionId = uuid.v4();
+
+                      await ActionService().createAction(
+                        actionId: actionId,
+                        titre: _titreController.text,
+                        description: _descriptionController.text,
+                        localisation: _localisationController.text,
+                        debut: _debutController.text,
+                        fin: _finController.text,
+                        besoin: _besoinController.text,
+                        telephone: '$_selectedCountryCode ${_telephoneController.text}',
+                        imageFile: _selectedImage,
+                        userId: currentUser['userId'],
+                        firstName: currentUser['firstName'],
+                        lastName: currentUser['lastName'],
+                        profilePic: currentUser['profilePic'],
+                      );
+
+                      _clearFields();
+                      _showDialog('Action créée avec succès !');
+                    } catch (error) {
+                      _showDialog('Une erreur est survenue : $error', isError: true);
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-                    backgroundColor: Colors.white, // Couleur de fond
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
                   ),
                   child: const Text(
-                    'Proposer l\'action',
-                    style: TextStyle(color: Color(0xFF2F313F)), // Couleur du texte
+                    'Proposer une action',
+                    style: TextStyle(color: Color(0xFF2F313F)),
                   ),
                 ),
-
               ],
             ),
           ),

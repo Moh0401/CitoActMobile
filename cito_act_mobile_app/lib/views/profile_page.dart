@@ -81,13 +81,16 @@ class _ProfilPageState extends State<ProfilPage> {
         ],
       ),
       body: currentUser == null
-          ? const Center(child: CircularProgressIndicator()) // Afficher un loader si les données ne sont pas encore chargées
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            UserInfoSection(user: currentUser!), // Passer les infos de l'utilisateur
-            ActionButtonsSection(context),
+            UserInfoSection(user: currentUser!),
+            ActionButtonsSection(
+              context,
+              userId: currentUser!.uid, // Passez l'ID de l'utilisateur ici
+            ),
             AddButton(),
           ],
         ),

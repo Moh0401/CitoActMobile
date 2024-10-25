@@ -1,6 +1,6 @@
 // TraditionModel class with user fields
 class TraditionModel {
-  String id;
+  String traditionId;
   String titre;
   String description;
   String praticiens;
@@ -21,7 +21,7 @@ class TraditionModel {
 
 
   TraditionModel({
-    required this.id,
+    required this.traditionId,
     required this.titre,
     required this.description,
     required this.praticiens,
@@ -42,7 +42,7 @@ class TraditionModel {
   // Convert TraditionModel to a map for Firestore
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
+      'traditionId': traditionId,
       'titre': titre, // Ici aussi, utilisez 'titre'
       'description': description,
       'praticiens': praticiens,
@@ -65,7 +65,7 @@ class TraditionModel {
   // Create a TraditionModel instance from Firestore map
   factory TraditionModel.fromMap(Map<String, dynamic> map) {
     return TraditionModel(
-      id: map['id'] ?? '',
+      traditionId: map['traditionId'] ?? '',
       titre: map['titre'] ?? '',
       description: map['description'] ?? '',
       praticiens: map['praticiens'] ?? '',

@@ -1,23 +1,27 @@
 import 'package:cito_act_mobile_app/models/comment_action_model.dart';
+import 'package:cito_act_mobile_app/models/comment_tradition_model.dart';
 import 'package:cito_act_mobile_app/models/comment_projet_model.dart';
 import 'package:cito_act_mobile_app/services/comment_action_service.dart';
 import 'package:cito_act_mobile_app/services/comment_projet_service.dart';
+import 'package:cito_act_mobile_app/services/comment_tradition_service.dart';
 import 'package:cito_act_mobile_app/services/user_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class CommentProjetPage extends StatefulWidget {
-  final String projetId;
+class CommentTraditionPage extends StatefulWidget {
+  final String TraditionId; // Ajout du projetId
 
-  CommentProjetPage({required this.projetId});
+  CommentTraditionPage({required this.TraditionId}); // Recevoir le projetId
 
   @override
-  _CommentProjetPageState createState() => _CommentProjetPageState();
+  _CommentTraditionPageState createState() => _CommentTraditionPageState();
 }
 
-class _CommentProjetPageState extends State<CommentProjetPage> {
-  final CommentProjetService _commentProjetService = CommentProjetService();
+
+
+class _CommentTraditionPageState extends State<CommentTraditionPage> {
+  final CommentTraditionService _commentTraditionService = CommentTraditionService();
   final UserService _userService = UserService();
   final TextEditingController _commentController = TextEditingController();
 
@@ -63,8 +67,8 @@ class _CommentProjetPageState extends State<CommentProjetPage> {
         child: Column(
           children: [
             Expanded(
-              child: StreamBuilder<List<CommentProjetModel>>(
-                stream: _commentProjetService.getCommentsForAction(widget.projetId),
+              child: StreamBuilder<List<CommentTraditionModel>>(
+                stream: _commentTraditionService.getCommentsForAction(widget.TraditionId),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(child: CircularProgressIndicator());
@@ -133,11 +137,10 @@ class _CommentProjetPageState extends State<CommentProjetPage> {
 
                                   if (confirm == true) {
                                     try {
-                                      // Appel à reportComment avec l'ID du commentaire
-                                      await _commentProjetService.reportComment(comment.id);
+                                      await _commentTraditionService.reportComment(comment.id); // Utiliser l'ID du commentaire
                                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Commentaire signalé')));
                                       setState(() {
-                                        comment.isReported = true; // Met à jour l'état localement
+                                        comment.isReported = true;
                                       });
                                     } catch (e) {
                                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur lors du signalement'), backgroundColor: Color(0xFF6887B0)));
@@ -145,10 +148,8 @@ class _CommentProjetPageState extends State<CommentProjetPage> {
                                   }
                                 },
                               ),
-
                             ],
                           ),
-
                         ),
                       );
                     },
@@ -178,8 +179,7 @@ class _CommentProjetPageState extends State<CommentProjetPage> {
                       if (_commentController.text.isNotEmpty) {
                         final userId = FirebaseAuth.instance.currentUser?.uid;
                         if (userId != null) {
-                          // Créez le modèle de commentaire avec un ID temporaire (vide)
-                          final comment = CommentProjetModel(
+                          final comment = CommentTraditionModel(
                             id: '', // L'ID sera généré automatiquement
                             text: _commentController.text,
                             userId: userId,
@@ -188,17 +188,14 @@ class _CommentProjetPageState extends State<CommentProjetPage> {
                             imageUrl: _imageUrl ?? '',
                             isReported: false,
                             timestamp: DateTime.now(),
-                            projetId: widget.projetId,
+                           traditionId: widget.TraditionId,
                           );
-
-                          // Ajoutez le commentaire et récupérez l'ID généré par Firestore
-                          await _commentProjetService.addComment(comment, widget.projetId);
+                          await _commentTraditionService.addComment(comment, widget.TraditionId);
                           _commentController.clear();
                         }
                       }
                     },
                   ),
-
                 ],
               ),
             ),

@@ -1,13 +1,13 @@
-import 'package:cito_act_mobile_app/models/comment_action_model.dart';
 import 'package:cito_act_mobile_app/models/comment_projet_model.dart';
+import 'package:cito_act_mobile_app/models/comment_tradition_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class CommentProjetService {
+class CommentTraditionService {
   final CollectionReference commentsRef = FirebaseFirestore.instance.collection('comments');
 
-  Future<void> addComment(CommentProjetModel comment, String projetId) async {
+  Future<void> addComment(CommentTraditionModel comment, String traditionId) async {
     try {
-      comment.projetId = projetId; // Assurez-vous d'avoir l'actionId
+      comment.traditionId = traditionId; // Assurez-vous d'avoir l'actionId
       DocumentReference docRef = await commentsRef.add(comment.toMap());
 
       // Récupérer l'ID généré par Firestore et mettre à jour le commentaire
@@ -22,14 +22,14 @@ class CommentProjetService {
 
 
 
-  Stream<List<CommentProjetModel>> getCommentsForAction(String projetId) {
+  Stream<List<CommentTraditionModel>> getCommentsForAction(String traditionId) {
     return commentsRef
-        .where('projetId', isEqualTo: projetId)
+        .where('traditionId', isEqualTo: traditionId)
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) {
       final data = doc.data() as Map<String, dynamic>?;
       if (data != null) {
-        return CommentProjetModel.fromMap(data, doc.id); // Passer doc.id ici
+        return CommentTraditionModel.fromMap(data, doc.id); // Passer doc.id ici
       } else {
         throw Exception('Comment data is null');
       }

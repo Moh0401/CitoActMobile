@@ -51,6 +51,7 @@ class CustomCard extends StatelessWidget {
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
                   title.toUpperCase(),
+                  maxLines: 1, // Limite le titre à une seule ligne
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,

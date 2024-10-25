@@ -1,4 +1,4 @@
-import 'package:cito_act_mobile_app/views/comment_page.dart';
+import 'package:cito_act_mobile_app/views/comment_tradition_page.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:just_audio/just_audio.dart';
@@ -351,7 +351,7 @@ class _TraditionDetailPageState extends State<TraditionDetailPage> {
                           });
                           // Incrémenter les likes si l'utilisateur aime le projet
                           if (_isLiked) {
-                            traditionServices.incrementLikes(widget.tradition.id, widget.tradition.likes ?? 0);
+                            traditionServices.incrementLikes(widget.tradition.traditionId, widget.tradition.likes ?? 0);
                           }
                         },
                       ),
@@ -361,7 +361,9 @@ class _TraditionDetailPageState extends State<TraditionDetailPage> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => CommentPage()),
+                            MaterialPageRoute(
+                              builder: (context) => CommentTraditionPage(TraditionId: widget.tradition.traditionId), // Passer l'ID du projet ici
+                            ),
                           );
                         },
                       ),

@@ -92,8 +92,14 @@ class _ActionPageState extends State<ActionPage> {
       child: ListTile(
         contentPadding: EdgeInsets.all(8.0),
         leading: Image.network(action.imageUrl, fit: BoxFit.cover, width: 80),
-        title: Text(action.titre, style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(action.description),
+        title: Text(action.titre.toUpperCase(),
+            maxLines: 1, // Limite le titre à une seule ligne
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(
+          action.description,
+          maxLines: 3, // Limiter à 3 lignes
+          overflow: TextOverflow.ellipsis, // Ajouter des points de suspension si le texte dépasse
+        ),
         trailing: TextButton(
           onPressed: () {
             Navigator.push(

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class CommentProjetModel {
+class CommentTraditionModel {
   String id; // Ajout du champ id
   String userId;
   String text;
@@ -9,9 +9,9 @@ class CommentProjetModel {
   String firstName;
   String lastName;
   bool isReported;
-  String projetId;
+  String traditionId;
 
-  CommentProjetModel({
+  CommentTraditionModel({
     required this.id, // Inclure id dans le constructeur
     required this.userId,
     required this.text,
@@ -20,11 +20,11 @@ class CommentProjetModel {
     required this.firstName,
     required this.lastName,
     this.isReported = false,
-    required this.projetId,
+    required this.traditionId,
   });
 
-  factory CommentProjetModel.fromMap(Map<String, dynamic> map, String documentId) {
-    return CommentProjetModel(
+  factory CommentTraditionModel.fromMap(Map<String, dynamic> map, String documentId) {
+    return CommentTraditionModel(
       id: documentId, // Passer l'ID du document ici
       userId: map['userId'] ?? '',
       text: map['text'] ?? '',
@@ -33,7 +33,7 @@ class CommentProjetModel {
       firstName: map['firstName'] ?? '',
       lastName: map['lastName'] ?? '',
       isReported: map['isReported'] ?? false,
-      projetId: map['projetId'] ?? '',
+      traditionId: map['traditionId'] ?? '',
     );
   }
 
@@ -46,7 +46,7 @@ class CommentProjetModel {
       'firstName': firstName,
       'lastName': lastName,
       'isReported': isReported,
-      'projetId': projetId,
+      'traditionId': traditionId,
     };
   }
 }
