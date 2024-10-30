@@ -16,6 +16,7 @@ class FirestoreService {
         'phone': user.phone,
         'role': user.role,
         'imageUrl': user.imageUrl,
+        'fcmToken': user.fcmToken
       });
       print("Utilisateur ajouté avec succès dans Firestore.");
     } catch (e) {

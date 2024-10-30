@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cito_act_mobile_app/models/user_model.dart';
@@ -25,6 +26,8 @@ class _SignUpPageState extends State<SignUpPage> {
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
   final StorageService _storageService = StorageService();
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
 
   File? _selectedImage;
   String? _webImageUrl;
@@ -63,6 +66,18 @@ class _SignUpPageState extends State<SignUpPage> {
     });
 
     try {
+      // Demander la permission pour les notifications (important sur iOS)
+      NotificationSettings settings = await _firebaseMessaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      // Obtenir le FCM token
+      String? fcmToken = await _firebaseMessaging.getToken();
+      print("FCM Token obtenu: $fcmToken"); // Ajoutez cette ligne
+
+
       UserModel? userModel = await _authService.signUpWithEmail(
         emailController.text,
         passwordController.text,
@@ -72,8 +87,7 @@ class _SignUpPageState extends State<SignUpPage> {
         String imageUrl = '';
 
         if (_selectedImage != null) {
-          imageUrl =
-          await _storageService.uploadImage(_selectedImage!, userModel.uid);
+          imageUrl = await _storageService.uploadImage(_selectedImage!, userModel.uid);
         }
 
         UserModel newUser = UserModel(
@@ -84,24 +98,26 @@ class _SignUpPageState extends State<SignUpPage> {
           phone: phoneController.text,
           role: _selectedRole,
           imageUrl: imageUrl,
+          fcmToken: fcmToken,
         );
 
-// Ajoutez cette ligne pour vérifier l'UID
+        // Ajoutez cette ligne pour vérifier l'UID
         print("UID de l'utilisateur créé : ${newUser.uid}");
+        print("FCM Token dans newUser: ${newUser.fcmToken}"); // Ajoutez cette ligne
 
-// Appel au service Firestore pour enregistrer l'utilisateur
+
+        // Appel au service Firestore pour enregistrer l'utilisateur
         await _firestoreService.createUser(newUser);
 
-
-        await _firestoreService.createUser(newUser);
+        // Suppression du double appel à createUser
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Votre compte a été créé avec succès !'),
             duration: Duration(seconds: 2),
           ),
         );
 
-        await Future.delayed(Duration(seconds: 2));
+        await Future.delayed(const Duration(seconds: 2));
         Navigator.pushReplacementNamed(context, '/login');
       } else {
         print("Échec de la création de l'utilisateur");
@@ -109,7 +125,7 @@ class _SignUpPageState extends State<SignUpPage> {
     } catch (e) {
       print("Erreur lors de l'inscription : $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Erreur lors de la création du compte.'),
           duration: Duration(seconds: 2),
         ),

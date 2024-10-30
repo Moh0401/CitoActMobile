@@ -1,11 +1,12 @@
 import 'package:cito_act_mobile_app/models/projet_model.dart';
+import 'package:cito_act_mobile_app/views/notification_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firebase Firestore
 import '../utils/bottom_nav_bar.dart';
 import '../utils/search_bar.dart';
 import 'projet_detail_page.dart';
 
-class ProjetPage extends StatelessWidget {
+class ProjetPage extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
 
@@ -13,6 +14,27 @@ class ProjetPage extends StatelessWidget {
     required this.selectedIndex,
     required this.onItemTapped,
   });
+
+  @override
+  State<ProjetPage> createState() => _ProjetPageState();
+}
+
+class _ProjetPageState extends State<ProjetPage> {
+
+  List<ProjetModel> _allProjets = [];
+  List<ProjetModel> _filteredProjets = [];
+
+  void _onSearch(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredProjets = _allProjets;
+      } else {
+        _filteredProjets = _allProjets.where((projet) {
+          return projet.titre.toLowerCase().contains(query.toLowerCase()) ;
+        }).toList();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,12 +46,24 @@ class ProjetPage extends StatelessWidget {
         elevation: 0,
         title: Text('Projets', style: TextStyle(color: Colors.black)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.notifications),
+            onPressed: () {
+              // Naviguer vers la page des notifications
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationsPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const CustomSearchBar(),
+            CustomSearchBar(onSearch: _onSearch),
             SizedBox(height: 16),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
@@ -66,8 +100,8 @@ class ProjetPage extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomNavBar(
-        selectedIndex: selectedIndex,
-        onItemTapped: onItemTapped,
+        selectedIndex: widget.selectedIndex,
+        onItemTapped: widget.onItemTapped,
       ),
     );
   }
@@ -102,8 +136,8 @@ class ProjetPage extends StatelessWidget {
                 builder: (context) => ProjetDetailPage(
                   projetId: projet.projetId, // Passez l'ID du projet ici
                   groupName: groupName, // Passez groupName ici
-                  selectedIndex: selectedIndex,
-                  onItemTapped: onItemTapped,
+                  selectedIndex: widget.selectedIndex,
+                  onItemTapped: widget.onItemTapped,
                 ),
               ),
             );
@@ -119,5 +153,4 @@ class ProjetPage extends StatelessWidget {
       ),
     );
   }
-
 }

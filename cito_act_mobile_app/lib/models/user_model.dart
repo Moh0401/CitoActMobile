@@ -6,6 +6,8 @@ class UserModel {
   String phone;
   String role; // Nouveau champ
   String? imageUrl; // Ajoutez ce champ pour stocker l'URL de l'image
+  String? fcmToken; // Ajoutez cette ligne
+
 
   UserModel({
     required this.uid,
@@ -15,6 +17,8 @@ class UserModel {
     required this.phone,
     this.role = 'citoyen', // Valeur par défaut
     this.imageUrl, // Ajoutez ce paramètre
+    this.fcmToken, // Ajoutez cette ligne
+
   });
 
   Map<String, dynamic> toMap() {
@@ -26,6 +30,8 @@ class UserModel {
       'phone': phone,
       'role': role,
       'imageUrl': imageUrl, // N'oubliez pas d'inclure l'URL de l'image
+      'fcmToken': fcmToken, // Ajoutez cette ligne
+
     };
   }
 
@@ -38,6 +44,8 @@ class UserModel {
       phone: map['phone'],
       role: map['role'] ?? 'citoyen',
       imageUrl: map['imageUrl'], // Récupérer l'URL de l'image
+      fcmToken: map['fcmToken'], // Récupérer l'URL de l'image
+
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:cito_act_mobile_app/views/notification_page.dart';
 import 'package:flutter/material.dart';
 import '../utils/bottom_nav_bar.dart';
 import '../utils/search_bar.dart';
@@ -27,11 +28,32 @@ class ActionPage extends StatefulWidget {
 class _ActionPageState extends State<ActionPage> {
   final ActionService _actionService = ActionService();
   late Future<List<ActionModel>> _actionsFuture;
+  String _searchQuery = '';
+  List<ActionModel> _filteredActions = [];
 
   @override
   void initState() {
     super.initState();
     _actionsFuture = _actionService.getValidatedActions(); // Récupérer les actions validées
+    _loadActions();
+  }
+
+  void _loadActions() async {
+    _actionsFuture = _actionService.getValidatedActions();
+    final actions = await _actionsFuture;
+    setState(() {
+      _filteredActions = actions;
+    });
+  }
+
+
+  void _onSearch(String query) {
+    setState(() {
+      _searchQuery = query.toLowerCase();
+      _filteredActions = _filteredActions.where((action) {
+        return action.titre.toLowerCase().contains(_searchQuery) ;
+      }).toList();
+    });
   }
 
   @override
@@ -42,12 +64,24 @@ class _ActionPageState extends State<ActionPage> {
         elevation: 0,
         title: Text('Actions', style: TextStyle(color: Colors.black)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.notifications),
+            onPressed: () {
+              // Naviguer vers la page des notifications
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationsPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const CustomSearchBar(),
+            CustomSearchBar(onSearch: _onSearch),
             SizedBox(height: 16),
             Expanded(
               child: FutureBuilder<List<ActionModel>>(

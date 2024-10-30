@@ -21,6 +21,7 @@ class ProfilPage extends StatefulWidget {
   _ProfilPageState createState() => _ProfilPageState();
 }
 
+
 class _ProfilPageState extends State<ProfilPage> {
   UserModel? currentUser;
 
@@ -46,6 +47,11 @@ class _ProfilPageState extends State<ProfilPage> {
       }
     }
   }
+  Future<void> logout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushReplacementNamed(context, '/login'); // Remplacez '/login' par votre route de page de connexion
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -89,12 +95,29 @@ class _ProfilPageState extends State<ProfilPage> {
             UserInfoSection(user: currentUser!),
             ActionButtonsSection(
               context,
-              userId: currentUser!.uid, // Passez l'ID de l'utilisateur ici
+              userId: currentUser!.uid,
             ),
-            AddButton(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center, // Centre les boutons horizontalement
+              children: [
+                AddButton(),
+                const SizedBox(width: 20), // Espace entre les boutons
+                SizedBox(
+                  width: 90, // Largeur du bouton
+                  height: 90, // Hauteur du bouton
+                  child: IconButton(
+                    icon: Icon(Icons.logout, color: Color(0xFF6887B0)),
+                    iconSize: 36,
+                    onPressed: logout,
+                  ),
+                ),
+              ],
+            ),
+
           ],
         ),
       ),
+
       bottomNavigationBar: BottomNavBar(
         selectedIndex: widget.selectedIndex,
         onItemTapped: widget.onItemTapped,

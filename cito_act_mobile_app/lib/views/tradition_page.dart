@@ -1,3 +1,4 @@
+import 'package:cito_act_mobile_app/views/notification_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firebase Firestore
 import '../utils/bottom_nav_bar.dart';
@@ -5,7 +6,7 @@ import '../utils/search_bar.dart';
 import 'tradition_detail_page.dart';
 import '../models/tradition_model.dart'; // Assurez-vous d'importer le bon modèle
 
-class TraditionPage extends StatelessWidget {
+class TraditionPage extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
 
@@ -15,6 +16,26 @@ class TraditionPage extends StatelessWidget {
   });
 
   @override
+  State<TraditionPage> createState() => _TraditionPageState();
+}
+
+class _TraditionPageState extends State<TraditionPage> {
+  List<TraditionModel> _allTraditions = [];
+  List<TraditionModel> _filteredTraditions = [];
+
+  void _onSearch(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredTraditions = _allTraditions;
+      } else {
+        _filteredTraditions = _allTraditions.where((tradition) {
+          return tradition.titre.toLowerCase().contains(query.toLowerCase());
+        }).toList();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -22,12 +43,24 @@ class TraditionPage extends StatelessWidget {
         elevation: 0,
         title: Text('Traditions', style: TextStyle(color: Colors.black)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.notifications),
+            onPressed: () {
+              // Naviguer vers la page des notifications
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationsPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const CustomSearchBar(),
+            CustomSearchBar(onSearch: _onSearch),
             SizedBox(height: 16),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
@@ -67,8 +100,8 @@ class TraditionPage extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomNavBar(
-        selectedIndex: selectedIndex,
-        onItemTapped: onItemTapped,
+        selectedIndex: widget.selectedIndex,
+        onItemTapped: widget.onItemTapped,
       ),
     );
   }
@@ -100,8 +133,8 @@ class TraditionPage extends StatelessWidget {
               MaterialPageRoute(
                 builder: (context) => TraditionDetailPage(
                   tradition: tradition,
-                  selectedIndex: selectedIndex,
-                  onItemTapped: onItemTapped,
+                  selectedIndex: widget.selectedIndex,
+                  onItemTapped: widget.onItemTapped,
                 ),
               ),
             );

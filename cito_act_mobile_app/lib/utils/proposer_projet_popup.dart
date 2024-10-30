@@ -15,8 +15,10 @@ class ProposerProjetPopup extends StatefulWidget {
 
 class _ProposerProjetPopupState extends State<ProposerProjetPopup> {
   XFile? _selectedImage;
+  DateTime? _selectedStartDate; // Ajoutez cette ligne pour définir la variable
 
-  // Controllers for the TextFields
+
+// Controllers for the TextFields
   final TextEditingController _titreController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _localisationController = TextEditingController();
@@ -35,7 +37,7 @@ class _ProposerProjetPopupState extends State<ProposerProjetPopup> {
     });
   }
 
-  // Method to show DatePicker and set the selected date
+// Méthode pour afficher le DatePicker et définir la date sélectionnée
   Future<void> _selectDate(TextEditingController controller) async {
     // Si c'est la date de début
     if (controller == _debutController) {
@@ -48,10 +50,7 @@ class _ProposerProjetPopupState extends State<ProposerProjetPopup> {
           return Theme(
             data: ThemeData.light().copyWith(
               primaryColor: const Color(0xFF6A96CE),
-              hintColor: const Color(0xFF6A96CE),
               colorScheme: ColorScheme.light(primary: const Color(0xFF6A96CE)),
-              buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
-              dialogBackgroundColor: Colors.white,
             ),
             child: child ?? const SizedBox.shrink(),
           );
@@ -60,17 +59,44 @@ class _ProposerProjetPopupState extends State<ProposerProjetPopup> {
 
       if (pickedDate != null) {
         controller.text = "${pickedDate.toLocal()}".split(' ')[0];
-        // Définir automatiquement la date de fin à une semaine après la date de début
-        DateTime dateFin = pickedDate.add(const Duration(days: 7));
-        _finController.text = "${dateFin.toLocal()}".split(' ')[0];
+        setState(() {
+          _selectedStartDate = pickedDate;
+        });
       }
     }
-    // Si c'est la date de fin (désactivé car la date de fin est automatiquement fixée)
+    // Si c'est la date de fin
     else if (controller == _finController) {
-      _showDialog('La date de fin est automatiquement fixée à une semaine après la date de début', isError: true);
-      return;
+      // Vérifie que la date de début est sélectionnée
+      if (_selectedStartDate == null) {
+        _showDialog('Veuillez sélectionner une date de début d\'abord', isError: true);
+        return;
+      }
+
+      // Définit la date minimale pour la date de fin (au moins 8 jours à partir de maintenant)
+      final DateTime minEndDate = DateTime.now().add(Duration(days: 8));
+      final DateTime? pickedDate = await showDatePicker(
+        context: context,
+        initialDate: minEndDate,
+        firstDate: minEndDate,
+        lastDate: DateTime(2101),
+        builder: (BuildContext context, Widget? child) {
+          return Theme(
+            data: ThemeData.light().copyWith(
+              primaryColor: const Color(0xFF6A96CE),
+              colorScheme: ColorScheme.light(primary: const Color(0xFF6A96CE)),
+            ),
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
+      );
+
+      if (pickedDate != null) {
+        controller.text = "${pickedDate.toLocal()}".split(' ')[0];
+      }
     }
   }
+
+
   // Hide the keyboard when tapping outside of text fields
   void _hideKeyboard() {
     FocusScope.of(context).unfocus();
