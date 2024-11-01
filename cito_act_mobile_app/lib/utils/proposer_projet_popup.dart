@@ -108,8 +108,13 @@ class _ProposerProjetPopupState extends State<ProposerProjetPopup> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(isError ? 'Erreur' : 'Succès'),
-          content: Text(message),
+          backgroundColor: Colors.white, // Fond blanc
+
+          title: Text(isError ? 'Erreur' : 'Succès',          style: TextStyle(color: Colors.black), // Texte coloré
+          ),
+
+          content: Text(message  ,          style: const TextStyle(color: Colors.black), // Texte coloré
+        ),
           actions: [
             TextButton(
               onPressed: () {

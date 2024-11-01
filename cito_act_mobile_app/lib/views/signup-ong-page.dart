@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cito_act_mobile_app/models/ong_model.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,16 +10,13 @@ import 'package:cito_act_mobile_app/services/storage_service.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:flutter/foundation.dart';
 
-class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
-
+class SignUpOngPage extends StatefulWidget {
   @override
-  _SignUpPageState createState() => _SignUpPageState();
+  _SignUpOngPageState createState() => _SignUpOngPageState();
 }
 
-class _SignUpPageState extends State<SignUpPage> {
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
+class _SignUpOngPageState extends State<SignUpOngPage> {
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -30,7 +28,6 @@ class _SignUpPageState extends State<SignUpPage> {
 
   // Ajoutez une variable pour le code pays sélectionné
   String _selectedCountryCode = '+223'; // Valeur par défaut
-
 
 
   File? _selectedImage;
@@ -82,29 +79,29 @@ class _SignUpPageState extends State<SignUpPage> {
       print("FCM Token obtenu: $fcmToken"); // Ajoutez cette ligne
 
 
-      UserModel? userModel = await _authService.signUpWithEmail(
+      UserModel? userOngModel = await _authService.signUpWithEmail(
         emailController.text,
         passwordController.text,
       );
 
-      if (userModel != null) {
+      if (userOngModel != null) {
         String imageUrl = '';
 
         if (_selectedImage != null) {
-          imageUrl = await _storageService.uploadImage(_selectedImage!, userModel.uid);
+          imageUrl = await _storageService.uploadImage(_selectedImage!, userOngModel.uid);
         }
 
-        UserModel newUser = UserModel(
-          uid: userModel.uid,
-          firstName: firstNameController.text,
-          lastName: lastNameController.text,
+        UserOngModel newUser = UserOngModel(
+          uid: userOngModel.uid,
+          name: nameController.text,
           email: emailController.text,
           phone: phoneController.text,
-          role: 'citoyen', // Rôle défini automatiquement
+          role: 'ong', // Rôle défini automatiquement
           imageUrl: imageUrl,
           fcmToken: fcmToken,
           countryCode: _selectedCountryCode, // Nouveau champ
         );
+
 
         // Ajoutez cette ligne pour vérifier l'UID
         print("UID de l'utilisateur créé : ${newUser.uid}");
@@ -112,7 +109,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
 
         // Appel au service Firestore pour enregistrer l'utilisateur
-        await _firestoreService.createUser(newUser);
+        await _firestoreService.createOng(newUser);
 
         // Suppression du double appel à createUser
         ScaffoldMessenger.of(context).showSnackBar(
@@ -161,9 +158,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                buildTextField(firstNameController, 'Prénom'),
-                const SizedBox(height: 16),
-                buildTextField(lastNameController, 'Nom'),
+                buildTextField(nameController, 'Nom'),
                 const SizedBox(height: 16),
                 buildTextField(emailController, 'Email'),
                 const SizedBox(height: 16),
@@ -210,8 +205,6 @@ class _SignUpPageState extends State<SignUpPage> {
                 const SizedBox(height: 16),
                 buildTextField(passwordController, 'Mot de passe',
                     isPassword: true),
-                const SizedBox(height: 20),
-
                 const SizedBox(height: 20),
 
                 if (_isLoading)

@@ -1,7 +1,6 @@
-class UserModel  {
+class UserOngModel {
   String uid;
-  String firstName;
-  String lastName;
+  String name;
   String email;
   String phone;
   String role; // Nouveau champ
@@ -10,13 +9,14 @@ class UserModel  {
   String countryCode; // Ajoutez cette ligne
 
 
-  UserModel({
+
+  UserOngModel({
     required this.uid,
-    required this.firstName,
-    required this.lastName,
+
+    required this.name,
     required this.email,
     required this.phone,
-    required this.role , // Valeur par défaut
+    required this.role, // Valeur par défaut
     this.imageUrl, // Ajoutez ce paramètre
     this.fcmToken, // Ajoutez cette ligne
     required this.countryCode, // Valeur par défaut
@@ -27,29 +27,25 @@ class UserModel  {
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
-      'firstName': firstName,
-      'lastName': lastName,
+      'name': name,
       'email': email,
       'phone': phone,
       'role': role,
       'imageUrl': imageUrl, // N'oubliez pas d'inclure l'URL de l'image
-      'fcmToken': fcmToken, // Ajoutez cette ligne
+      'fcmToken': fcmToken,
       'countryCode': countryCode,
-
-
     };
   }
 
-  factory UserModel.fromMap(Map<String, dynamic> map) {
-    return UserModel(
+  factory UserOngModel.fromMap(Map<String, dynamic> map) {
+    return UserOngModel(
       uid: map['uid'],
-      firstName: map['firstName'],
-      lastName: map['lastName'],
+      name: map['name'],
       email: map['email'],
       phone: map['phone'],
       role: map['role'] ,
       imageUrl: map['imageUrl'], // Récupérer l'URL de l'image
-      fcmToken: map['fcmToken'], // Récupérer l'URL de l'image
+      fcmToken: map['fcmToken'],
       countryCode: map['countryCode'],
     );
   }

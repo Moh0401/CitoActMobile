@@ -1,4 +1,6 @@
 import 'package:cito_act_mobile_app/views/projet_detail_page.dart';
+import 'package:cito_act_mobile_app/views/signup-ong-page.dart';
+import 'package:cito_act_mobile_app/views/signup-selection-page.dart';
 import 'package:flutter/material.dart';
 import 'package:cito_act_mobile_app/services/auth_service.dart';
 import 'views/first_page.dart';
@@ -28,8 +30,13 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => LoginPage());
       case '/signup':
         return MaterialPageRoute(builder: (_) => SignUpPage());
+      case '/signupOng':
+        return MaterialPageRoute(builder: (_) => SignUpOngPage());
       case '/after-login':
         return MaterialPageRoute(builder: (_) => AfterLoginPage());
+      case '/signupSelection':
+        return MaterialPageRoute(builder: (_) => SignUpSelectionPage());
+
 
     // Routes sécurisées
       case '/mes-actions':

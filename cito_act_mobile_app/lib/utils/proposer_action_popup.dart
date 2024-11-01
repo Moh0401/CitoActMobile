@@ -16,6 +16,8 @@ class ProposerActionPopup extends StatefulWidget {
 
 class _ProposerActionPopupState extends State<ProposerActionPopup> {
   XFile? _selectedImage;
+  bool _isLoading = false; // Ajouter l'état de chargement
+
 
   // Controllers for the TextFields
   final TextEditingController _titreController = TextEditingController();
@@ -111,20 +113,31 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(isError ? 'Erreur' : 'Succès'),
-          content: Text(message),
+          backgroundColor: Colors.white, // Fond blanc
+          title: Text(
+            isError ? 'Erreur' : 'Succès',
+            style: TextStyle(color: Colors.black), // Texte coloré
+          ),
+          content: Text(
+            message,
+            style: const TextStyle(color: Colors.black), // Texte coloré
+          ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop(); // Fermer le dialogue
               },
-              child: const Text('OK'),
+              child: const Text(
+                'OK',
+                style: TextStyle(color: Color(0xFF6A96CE)), // Texte du bouton coloré
+              ),
             ),
           ],
         );
       },
     );
   }
+
 
   // Method to clear input fields
   void _clearFields() {
@@ -167,6 +180,15 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
+                // Affichage du loader si _isLoading est vrai
+                if (_isLoading)
+                  const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6887B0)),
+                    ),
+                  ),
+                // Image sélectionnée ou image par défaut
+                if (!_isLoading)
                 _selectedImage != null
                     ? Image.file(
                   File(_selectedImage!.path),
@@ -355,6 +377,9 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
                 // Submit button
                 ElevatedButton(
                   onPressed: () async {
+                    setState(() {
+                      _isLoading = true;
+                    });
                     try {
                       final currentUser = await _getCurrentUserData();
                       final actionId = uuid.v4();
@@ -379,6 +404,10 @@ class _ProposerActionPopupState extends State<ProposerActionPopup> {
                       _showDialog('Action créée avec succès !');
                     } catch (error) {
                       _showDialog('Une erreur est survenue : $error', isError: true);
+                    } finally {
+                    setState(() {
+                    _isLoading = false;
+                    });
                     }
                   },
                   style: ElevatedButton.styleFrom(

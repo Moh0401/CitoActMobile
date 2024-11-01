@@ -67,7 +67,10 @@ class _ProjetPageState extends State<ProjetPage> {
             SizedBox(height: 16),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('projets').snapshots(),
+                stream: FirebaseFirestore.instance
+                    .collection('projets')
+                    .where('valider', isEqualTo: true) // Filtrer les projets validés
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(child: CircularProgressIndicator());
@@ -94,7 +97,8 @@ class _ProjetPageState extends State<ProjetPage> {
                     },
                   );
                 },
-              ),
+              )
+
             ),
           ],
         ),

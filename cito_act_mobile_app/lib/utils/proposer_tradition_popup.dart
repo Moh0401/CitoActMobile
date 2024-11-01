@@ -31,6 +31,34 @@ class _ProposerTraditionPopupState extends State<ProposerTraditionPopup> {
   bool _isRecording = false;
   AudioPlayer _audioPlayer = AudioPlayer();
   bool _isPlaying = false;
+
+
+  void _showDialog(String message, {bool isError = false}) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white, // Fond blanc
+          title: Text(
+            isError ? 'Erreur' : 'Succès',
+            style: TextStyle(color: Colors.black), // Texte coloré
+          ),
+          content: Text(
+            message,
+            style: const TextStyle(color: Colors.black), // Texte coloré
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
   Future<void> _submitData() async {
     try {
       final String titre = _titleController.text;
@@ -104,16 +132,29 @@ class _ProposerTraditionPopupState extends State<ProposerTraditionPopup> {
       // Ajouter traditionId dans les données de la tradition et mettre à jour le document
       await docRef.update({'traditionId': docRef.id});
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tradition proposée avec succès !')),
-      );
+      // Afficher un message de succès
+      _showDialog('Tradition proposée avec succès !');
+
+      // Vider les champs et réinitialiser les sélections
+      _titleController.clear();
+      _descriptionController.clear();
+      _praticiensController.clear();
+      _menacesController.clear();
+      _origineController.clear();
+      setState(() {
+        _selectedImage = null;
+        _selectedVideo = null;
+        _selectedDocument = null;
+        _recordedAudioPath = null;
+      });
+
       Navigator.of(context).pop();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la soumission : $e')),
-      );
+      // Afficher un message d'erreur
+      _showDialog('Erreur lors de la soumission : $e', isError: true);
     }
   }
+
 
 
   Future<void> _startRecording() async {

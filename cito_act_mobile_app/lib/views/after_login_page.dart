@@ -15,10 +15,9 @@ class AfterLoginPage extends StatefulWidget {
 
 class _AfterLoginPageState extends State<AfterLoginPage> {
   String? firstName; // Variable pour stocker le prénom de l'utilisateur
+  String? role; // Variable pour stocker le rôle de l'utilisateur
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-
 
   @override
   void initState() {
@@ -30,12 +29,12 @@ class _AfterLoginPageState extends State<AfterLoginPage> {
     User? currentUser = _auth.currentUser;
     if (currentUser != null) {
       try {
-        DocumentSnapshot userDoc =
-        await _firestore.collection('users').doc(currentUser.uid).get();
+        DocumentSnapshot userDoc = await _firestore.collection('users').doc(currentUser.uid).get();
         print('User Document: ${userDoc.data()}'); // Vérifie les données récupérées
         if (userDoc.exists) {
           setState(() {
-            firstName = userDoc['firstName'];
+            role = userDoc['role']; // Assignez le rôle
+            firstName = role == 'ong' ? userDoc['name'] : userDoc['firstName'];
           });
         } else {
           print('Document utilisateur introuvable');
@@ -48,7 +47,6 @@ class _AfterLoginPageState extends State<AfterLoginPage> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,10 +54,7 @@ class _AfterLoginPageState extends State<AfterLoginPage> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Espacement en haut
           const SizedBox(height: 80),
-
-          // Contenu avec padding horizontal
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Column(
@@ -75,8 +70,7 @@ class _AfterLoginPageState extends State<AfterLoginPage> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  firstName ??
-                      'Utilisateur', // Afficher le prénom ou "Utilisateur" par défaut
+                  firstName ?? 'Utilisateur',
                   style: GoogleFonts.balooChettan2(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
@@ -84,9 +78,11 @@ class _AfterLoginPageState extends State<AfterLoginPage> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  "Qu'allez vous faire aujourd'hui ?",
-                  style: TextStyle(
+                Text(
+                  role == 'ong'
+                      ? "veuillez vous rendre sur l'acceuil ?"
+                      : "Qu'allez vous faire aujourd'hui ?",
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
@@ -94,49 +90,48 @@ class _AfterLoginPageState extends State<AfterLoginPage> {
                 ),
                 const SizedBox(height: 40),
 
-                // Boutons pour Proposer une action, Proposer un projet, Publier une tradition
-                CustomButton(
-                  text: 'Proposer une action',
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return const ProposerActionPopup();
-                      },
-                    );
-                  },
-                ),
-                const SizedBox(height: 15),
-                CustomButton(
-                  text: 'Proposer un projet',
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return const ProposerProjetPopup();
-                      },
-                    );
-                  },
-                ),
-                const SizedBox(height: 15),
-                CustomButton(
-                  text: 'Publier une tradition',
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return const ProposerTraditionPopup();
-                      },
-                    );
-                  },
-                ),
+                // Vérifiez le rôle de l'utilisateur
+                if (role != 'ong') ...[
+                  CustomButton(
+                    text: 'Proposer une action',
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return const ProposerActionPopup();
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 15),
+                  CustomButton(
+                    text: 'Proposer un projet',
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return const ProposerProjetPopup();
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 15),
+                  CustomButton(
+                    text: 'Publier une tradition',
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return const ProposerTraditionPopup();
+                        },
+                      );
+                    },
+                  ),
+                ],
               ],
             ),
           ),
-
           const Spacer(),
-
-          // Bouton Accueil pleine largeur sans padding horizontal
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(

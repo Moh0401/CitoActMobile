@@ -163,7 +163,7 @@ class _TraditionDetailPageState extends State<TraditionDetailPage> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF6887B0),
+                          color: Colors.black,
                         ),
                       ),
                     ],
