@@ -27,7 +27,6 @@ class _SignUpOngPageState extends State<SignUpOngPage> {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
   // Ajoutez une variable pour le code pays sélectionné
-  String _selectedCountryCode = '+223'; // Valeur par défaut
 
 
   File? _selectedImage;
@@ -99,7 +98,6 @@ class _SignUpOngPageState extends State<SignUpOngPage> {
           role: 'ong', // Rôle défini automatiquement
           imageUrl: imageUrl,
           fcmToken: fcmToken,
-          countryCode: _selectedCountryCode, // Nouveau champ
         );
 
 
@@ -162,46 +160,8 @@ class _SignUpOngPageState extends State<SignUpOngPage> {
                 const SizedBox(height: 16),
                 buildTextField(emailController, 'Email'),
                 const SizedBox(height: 16),
-                // DropdownButton pour le code pays
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedCountryCode,
-                        items: <String>['+223', '+225', '+33', '+1']
-                            .map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            _selectedCountryCode = newValue!;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          labelText: 'Code',
-                          labelStyle: TextStyle(color: Color(0xFF6887B0)),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30.0),
-                            borderSide: BorderSide(color: Color(0xFF6887B0)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30.0),
-                            borderSide: BorderSide(color: Color(0xFF6887B0)),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 4,
-                      child: buildTextField(phoneController, 'Numéro de téléphone'),
-                    ),
-                  ],
-                ),
+                buildTextField(phoneController, 'Tél'),
+
                 const SizedBox(height: 16),
                 buildTextField(passwordController, 'Mot de passe',
                     isPassword: true),

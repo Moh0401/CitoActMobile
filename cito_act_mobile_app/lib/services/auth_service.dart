@@ -6,7 +6,7 @@ class AuthService {
 
   // Convertir l'utilisateur Firebase en UserModel
   UserModel? _userFromFirebaseUser(User? user) {
-    return user != null ? UserModel(uid: user.uid, firstName: '', lastName: '', email: user.email!, phone: '', role: '', countryCode: '') : null;
+    return user != null ? UserModel(uid: user.uid, firstName: '', lastName: '', email: user.email!, phone: '', role: '') : null;
   }
 
   // Inscription avec email et mot de passe

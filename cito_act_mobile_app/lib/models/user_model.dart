@@ -7,7 +7,6 @@ class UserModel  {
   String role; // Nouveau champ
   String? imageUrl; // Ajoutez ce champ pour stocker l'URL de l'image
   String? fcmToken; // Ajoutez cette ligne
-  String countryCode; // Ajoutez cette ligne
 
 
   UserModel({
@@ -19,7 +18,6 @@ class UserModel  {
     required this.role , // Valeur par défaut
     this.imageUrl, // Ajoutez ce paramètre
     this.fcmToken, // Ajoutez cette ligne
-    required this.countryCode, // Valeur par défaut
 
 
   });
@@ -33,10 +31,7 @@ class UserModel  {
       'phone': phone,
       'role': role,
       'imageUrl': imageUrl, // N'oubliez pas d'inclure l'URL de l'image
-      'fcmToken': fcmToken, // Ajoutez cette ligne
-      'countryCode': countryCode,
-
-
+      'fcmToken': fcmToken, // Ajoutez cette lig
     };
   }
 
@@ -50,7 +45,6 @@ class UserModel  {
       role: map['role'] ,
       imageUrl: map['imageUrl'], // Récupérer l'URL de l'image
       fcmToken: map['fcmToken'], // Récupérer l'URL de l'image
-      countryCode: map['countryCode'],
     );
   }
 }
